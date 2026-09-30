@@ -1,6 +1,9 @@
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { NavLink } from "react-router-dom";
+
 import { useAuth } from "../../context/AuthContext";
+import { useOrganization } from "../../context/OrganizationContext";
 
 // =====================================================
 // NAVIGATION ITEMS
@@ -55,11 +58,89 @@ const navItems = [
 ];
 
 // =====================================================
+// ORGANIZATION HELPERS
+// =====================================================
+
+const getOrganizationName = (organization) => {
+  return (
+    organization?.name ||
+    organization?.businessName ||
+    "Unnamed Business"
+  );
+};
+
+const getOrganizationInitial = (organization) => {
+  const name = getOrganizationName(organization);
+
+  return name
+    .trim()
+    .charAt(0)
+    .toUpperCase();
+};
+
+const getBusinessType = (organization) => {
+  if (!organization?.businessType) {
+    return "Business";
+  }
+
+  return organization.businessType
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+};
+
+// =====================================================
 // SIDEBAR
 // =====================================================
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
+
+  const {
+    organizations,
+    currentOrganization,
+    switchOrganization,
+    loading: organizationLoading,
+  } = useOrganization();
+
+  const [workspaceOpen, setWorkspaceOpen] = useState(false);
+
+  const workspaceRef = useRef(null);
+
+  // ===================================================
+  // CLOSE DROPDOWN WHEN CLICKING OUTSIDE
+  // ===================================================
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (
+        workspaceRef.current &&
+        !workspaceRef.current.contains(event.target)
+      ) {
+        setWorkspaceOpen(false);
+      }
+    };
+
+    document.addEventListener(
+      "mousedown",
+      handleOutsideClick
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleOutsideClick
+      );
+    };
+  }, []);
+
+  // ===================================================
+  // ORGANIZATION SWITCH
+  // ===================================================
+
+  const handleOrganizationSwitch = (organization) => {
+    switchOrganization(organization);
+    setWorkspaceOpen(false);
+  };
 
   return (
     <>
@@ -69,8 +150,14 @@ const Sidebar = () => {
 
       <aside className="fixed inset-y-0 left-0 z-50 hidden w-72 p-3 lg:block">
         <motion.div
-          initial={{ opacity: 0, x: -25 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{
+            opacity: 0,
+            x: -25,
+          }}
+          animate={{
+            opacity: 1,
+            x: 0,
+          }}
           transition={{
             duration: 0.55,
             ease: [0.22, 1, 0.36, 1],
@@ -94,7 +181,6 @@ const Sidebar = () => {
           ================================================= */}
 
           <div className="pointer-events-none absolute inset-0">
-            {/* Top glow */}
             <div
               className="
                 absolute
@@ -108,7 +194,6 @@ const Sidebar = () => {
               "
             />
 
-            {/* Purple ambient glow */}
             <div
               className="
                 absolute
@@ -122,7 +207,6 @@ const Sidebar = () => {
               "
             />
 
-            {/* Cyan ambient glow */}
             <div
               className="
                 absolute
@@ -136,7 +220,6 @@ const Sidebar = () => {
               "
             />
 
-            {/* Subtle vertical shine */}
             <div
               className="
                 absolute
@@ -167,7 +250,6 @@ const Sidebar = () => {
               px-5
             "
           >
-            {/* Logo */}
             <motion.div
               whileHover={{
                 scale: 1.06,
@@ -195,7 +277,6 @@ const Sidebar = () => {
                 shadow-[0_0_35px_rgba(139,92,246,0.12)]
               "
             >
-              {/* Logo shine animation */}
               <motion.div
                 animate={{
                   x: ["-120%", "120%"],
@@ -219,7 +300,6 @@ const Sidebar = () => {
                 "
               />
 
-              {/* Logo letter */}
               <span
                 className="
                   relative
@@ -238,7 +318,6 @@ const Sidebar = () => {
               </span>
             </motion.div>
 
-            {/* Brand text */}
             <div className="ml-3 min-w-0">
               <h1
                 className="
@@ -268,37 +347,55 @@ const Sidebar = () => {
           </div>
 
           {/* =================================================
-              WORKSPACE SWITCHER
+              REAL WORKSPACE SWITCHER
           ================================================= */}
 
-          <div className="relative px-4 pt-5">
-            <motion.div
+          <div
+            ref={workspaceRef}
+            className="relative px-4 pt-5"
+          >
+            {/* =================================================
+                WORKSPACE BUTTON
+            ================================================= */}
+
+            <motion.button
+              type="button"
+              onClick={() =>
+                setWorkspaceOpen((previous) => !previous)
+              }
               whileHover={{
                 y: -1,
-                borderColor: "rgba(167,139,250,0.22)",
-                backgroundColor: "rgba(255,255,255,0.045)",
+              }}
+              whileTap={{
+                scale: 0.985,
               }}
               transition={{
                 type: "spring",
                 stiffness: 350,
                 damping: 25,
               }}
-              className="
+              className={`
                 group
+                relative
                 flex
-                cursor-pointer
+                w-full
                 items-center
                 rounded-2xl
                 border
-                border-white/[0.06]
-                bg-white/[0.025]
                 p-3
+                text-left
                 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)]
                 transition-all
                 duration-300
-              "
+                ${
+                  workspaceOpen
+                    ? "border-violet-400/20 bg-white/[0.05]"
+                    : "border-white/[0.06] bg-white/[0.025] hover:border-violet-400/20 hover:bg-white/[0.045]"
+                }
+              `}
             >
               {/* Business avatar */}
+
               <div
                 className="
                   relative
@@ -320,9 +417,33 @@ const Sidebar = () => {
                   text-violet-300
                 "
               >
-                B
+                {organizationLoading
+                  ? (
+                    <motion.div
+                      animate={{
+                        rotate: 360,
+                      }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
+                      className="
+                        h-4
+                        w-4
+                        rounded-full
+                        border
+                        border-violet-300/20
+                        border-t-violet-300
+                      "
+                    />
+                  )
+                  : (
+                    getOrganizationInitial(
+                      currentOrganization
+                    )
+                  )}
 
-                {/* shine */}
                 <div
                   className="
                     absolute
@@ -340,6 +461,7 @@ const Sidebar = () => {
               </div>
 
               {/* Business information */}
+
               <div className="ml-3 min-w-0 flex-1">
                 <p
                   className="
@@ -358,27 +480,376 @@ const Sidebar = () => {
                     truncate
                     text-xs
                     font-semibold
-                    text-white/75
+                    text-white/80
                   "
                 >
-                  My Business
+                  {organizationLoading
+                    ? "Loading workspace..."
+                    : getOrganizationName(
+                        currentOrganization
+                      )}
                 </p>
               </div>
 
-              {/* Arrow */}
-              <span
+              {/* Dropdown arrow */}
+
+              <motion.span
+                animate={{
+                  rotate: workspaceOpen ? 90 : 0,
+                }}
+                transition={{
+                  duration: 0.2,
+                }}
                 className="
-                  text-xs
-                  text-white/25
-                  transition-all
+                  text-sm
+                  text-white/30
+                  transition-colors
                   duration-300
-                  group-hover:translate-x-0.5
-                  group-hover:text-white/50
+                  group-hover:text-white/60
                 "
               >
                 ›
-              </span>
-            </motion.div>
+              </motion.span>
+            </motion.button>
+
+            {/* =================================================
+                ORGANIZATION DROPDOWN
+            ================================================= */}
+
+            <AnimatePresence>
+              {workspaceOpen && (
+                <motion.div
+                  initial={{
+                    opacity: 0,
+                    y: -8,
+                    scale: 0.97,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                  }}
+                  exit={{
+                    opacity: 0,
+                    y: -6,
+                    scale: 0.98,
+                  }}
+                  transition={{
+                    duration: 0.2,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  className="
+                    absolute
+                    left-4
+                    right-4
+                    top-[calc(100%+8px)]
+                    z-[100]
+                    overflow-hidden
+                    rounded-2xl
+                    border
+                    border-white/[0.09]
+                    bg-[#0b0b12]/95
+                    shadow-[0_25px_70px_rgba(0,0,0,0.6)]
+                    backdrop-blur-2xl
+                  "
+                >
+                  {/* Dropdown top glow */}
+
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-violet-500/[0.08] to-transparent" />
+
+                  {/* Header */}
+
+                  <div className="relative border-b border-white/[0.06] px-3 py-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p
+                          className="
+                            text-[9px]
+                            font-semibold
+                            uppercase
+                            tracking-[0.2em]
+                            text-white/25
+                          "
+                        >
+                          Your Workspaces
+                        </p>
+
+                        <p className="mt-1 text-[11px] text-white/40">
+                          Select a business
+                        </p>
+                      </div>
+
+                      <span
+                        className="
+                          rounded-lg
+                          border
+                          border-white/[0.06]
+                          bg-white/[0.025]
+                          px-2
+                          py-1
+                          text-[9px]
+                          font-medium
+                          text-white/30
+                        "
+                      >
+                        {organizations.length}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Organizations */}
+
+                  <div className="relative max-h-64 overflow-y-auto p-2 [scrollbar-width:none]">
+                    {organizationLoading ? (
+                      <div className="space-y-2 p-1">
+                        {[1, 2, 3].map((item) => (
+                          <div
+                            key={item}
+                            className="
+                              flex
+                              items-center
+                              gap-3
+                              rounded-xl
+                              border
+                              border-white/[0.04]
+                              bg-white/[0.02]
+                              p-2.5
+                            "
+                          >
+                            <div className="h-9 w-9 animate-pulse rounded-xl bg-white/[0.06]" />
+
+                            <div className="flex-1 space-y-1.5">
+                              <div className="h-2.5 w-2/3 animate-pulse rounded bg-white/[0.06]" />
+                              <div className="h-2 w-1/3 animate-pulse rounded bg-white/[0.04]" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : organizations.length === 0 ? (
+                      <div className="px-3 py-7 text-center">
+                        <div
+                          className="
+                            mx-auto
+                            flex
+                            h-10
+                            w-10
+                            items-center
+                            justify-center
+                            rounded-xl
+                            border
+                            border-white/[0.06]
+                            bg-white/[0.025]
+                            text-sm
+                            text-white/30
+                          "
+                        >
+                          +
+                        </div>
+
+                        <p className="mt-3 text-xs font-medium text-white/55">
+                          No workspaces yet
+                        </p>
+
+                        <p className="mt-1 text-[10px] text-white/25">
+                          Create a business to get started.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        {organizations.map(
+                          (organization) => {
+                            const isSelected =
+                              String(
+                                currentOrganization?._id
+                              ) ===
+                              String(organization?._id);
+
+                            return (
+                              <motion.button
+                                key={organization._id}
+                                type="button"
+                                onClick={() =>
+                                  handleOrganizationSwitch(
+                                    organization
+                                  )
+                                }
+                                whileHover={{
+                                  x: 2,
+                                }}
+                                whileTap={{
+                                  scale: 0.985,
+                                }}
+                                className={`
+                                  group
+                                  relative
+                                  flex
+                                  w-full
+                                  items-center
+                                  overflow-hidden
+                                  rounded-xl
+                                  border
+                                  p-2.5
+                                  text-left
+                                  transition-all
+                                  duration-200
+                                  ${
+                                    isSelected
+                                      ? "border-violet-400/15 bg-violet-500/[0.09]"
+                                      : "border-transparent hover:border-white/[0.06] hover:bg-white/[0.035]"
+                                  }
+                                `}
+                              >
+                                {/* Selected background */}
+
+                                {isSelected && (
+                                  <motion.div
+                                    layoutId="selectedOrganization"
+                                    className="
+                                      absolute
+                                      inset-0
+                                      bg-gradient-to-r
+                                      from-violet-500/[0.08]
+                                      to-transparent
+                                    "
+                                  />
+                                )}
+
+                                {/* Avatar */}
+
+                                <div
+                                  className={`
+                                    relative
+                                    z-10
+                                    flex
+                                    h-9
+                                    w-9
+                                    shrink-0
+                                    items-center
+                                    justify-center
+                                    rounded-xl
+                                    border
+                                    text-xs
+                                    font-bold
+                                    ${
+                                      isSelected
+                                        ? "border-violet-400/20 bg-violet-500/15 text-violet-200"
+                                        : "border-white/[0.06] bg-white/[0.035] text-white/45 group-hover:text-violet-300"
+                                    }
+                                  `}
+                                >
+                                  {getOrganizationInitial(
+                                    organization
+                                  )}
+                                </div>
+
+                                {/* Details */}
+
+                                <div className="relative z-10 ml-3 min-w-0 flex-1">
+                                  <p
+                                    className={`
+                                      truncate
+                                      text-xs
+                                      font-semibold
+                                      ${
+                                        isSelected
+                                          ? "text-white"
+                                          : "text-white/65"
+                                      }
+                                    `}
+                                  >
+                                    {getOrganizationName(
+                                      organization
+                                    )}
+                                  </p>
+
+                                  <p className="mt-0.5 truncate text-[9px] text-white/25">
+                                    {getBusinessType(
+                                      organization
+                                    )}
+                                  </p>
+                                </div>
+
+                                {/* Active indicator */}
+
+                                {isSelected && (
+                                  <motion.div
+                                    initial={{
+                                      scale: 0,
+                                      opacity: 0,
+                                    }}
+                                    animate={{
+                                      scale: 1,
+                                      opacity: 1,
+                                    }}
+                                    className="
+                                      relative
+                                      z-10
+                                      mr-1
+                                      flex
+                                      h-5
+                                      w-5
+                                      items-center
+                                      justify-center
+                                      rounded-full
+                                      border
+                                      border-violet-300/20
+                                      bg-violet-400/10
+                                      text-[9px]
+                                      text-violet-300
+                                    "
+                                  >
+                                    ✓
+                                  </motion.div>
+                                )}
+                              </motion.button>
+                            );
+                          }
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+
+                  <div className="border-t border-white/[0.06] p-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setWorkspaceOpen(false);
+                        // Organization creation UI will be added later.
+                      }}
+                      className="
+                        flex
+                        w-full
+                        items-center
+                        rounded-xl
+                        border
+                        border-transparent
+                        px-3
+                        py-2.5
+                        text-left
+                        text-[11px]
+                        font-medium
+                        text-white/35
+                        transition-all
+                        duration-200
+                        hover:border-violet-400/10
+                        hover:bg-violet-500/[0.05]
+                        hover:text-violet-300
+                      "
+                    >
+                      <span className="mr-2 text-sm">+</span>
+
+                      Create new workspace
+
+                      <span className="ml-auto text-white/20">
+                        →
+                      </span>
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* =================================================
@@ -396,7 +867,6 @@ const Sidebar = () => {
               [scrollbar-width:none]
             "
           >
-            {/* Workspace label */}
             <p
               className="
                 mb-2
@@ -411,7 +881,6 @@ const Sidebar = () => {
               Workspace
             </p>
 
-            {/* Navigation items */}
             <div className="space-y-1">
               {navItems.map((item) => (
                 <NavLink
@@ -445,10 +914,6 @@ const Sidebar = () => {
                         }
                       `}
                     >
-                      {/* ======================================
-                          ACTIVE GLASS BACKGROUND
-                      ====================================== */}
-
                       {isActive && (
                         <motion.div
                           layoutId="activeSidebarItem"
@@ -472,10 +937,6 @@ const Sidebar = () => {
                         />
                       )}
 
-                      {/* ======================================
-                          HOVER GLASS
-                      ====================================== */}
-
                       <div
                         className="
                           pointer-events-none
@@ -489,10 +950,6 @@ const Sidebar = () => {
                           group-hover:opacity-100
                         "
                       />
-
-                      {/* ======================================
-                          ACTIVE LEFT INDICATOR
-                      ====================================== */}
 
                       {isActive && (
                         <motion.div
@@ -512,10 +969,6 @@ const Sidebar = () => {
                         />
                       )}
 
-                      {/* ======================================
-                          ICON
-                      ====================================== */}
-
                       <motion.div
                         animate={
                           isActive
@@ -526,7 +979,9 @@ const Sidebar = () => {
                         }
                         transition={{
                           duration: 2,
-                          repeat: isActive ? Infinity : 0,
+                          repeat: isActive
+                            ? Infinity
+                            : 0,
                           ease: "easeInOut",
                         }}
                         className={`
@@ -553,10 +1008,6 @@ const Sidebar = () => {
                         {item.icon}
                       </motion.div>
 
-                      {/* ======================================
-                          LABEL
-                      ====================================== */}
-
                       <span
                         className="
                           relative
@@ -569,10 +1020,6 @@ const Sidebar = () => {
                       >
                         {item.label}
                       </span>
-
-                      {/* ======================================
-                          ACTIVE DOT
-                      ====================================== */}
 
                       {isActive && (
                         <motion.span
@@ -595,10 +1042,6 @@ const Sidebar = () => {
                           "
                         />
                       )}
-
-                      {/* ======================================
-                          HOVER ARROW
-                      ====================================== */}
 
                       {!isActive && (
                         <span
@@ -624,7 +1067,7 @@ const Sidebar = () => {
             </div>
 
             {/* =================================================
-                SYSTEM SECTION
+                SYSTEM
             ================================================= */}
 
             <p
@@ -642,7 +1085,6 @@ const Sidebar = () => {
               System
             </p>
 
-            {/* Settings */}
             <NavLink
               to="/settings"
               className="group relative block rounded-xl"
@@ -673,7 +1115,6 @@ const Sidebar = () => {
                     }
                   `}
                 >
-                  {/* Active background */}
                   {isActive && (
                     <motion.div
                       layoutId="activeSidebarSystem"
@@ -697,7 +1138,6 @@ const Sidebar = () => {
                     />
                   )}
 
-                  {/* Hover background */}
                   <div
                     className="
                       pointer-events-none
@@ -712,7 +1152,6 @@ const Sidebar = () => {
                     "
                   />
 
-                  {/* Active indicator */}
                   {isActive && (
                     <motion.div
                       layoutId="activeSidebarSystemIndicator"
@@ -731,7 +1170,6 @@ const Sidebar = () => {
                     />
                   )}
 
-                  {/* Icon */}
                   <div
                     className={`
                       relative
@@ -757,7 +1195,6 @@ const Sidebar = () => {
                     ⚙
                   </div>
 
-                  {/* Label */}
                   <span
                     className="
                       relative
@@ -771,7 +1208,6 @@ const Sidebar = () => {
                     Settings
                   </span>
 
-                  {/* Active dot */}
                   {isActive && (
                     <motion.span
                       initial={{
@@ -828,7 +1264,6 @@ const Sidebar = () => {
                 hover:bg-white/[0.04]
               "
             >
-              {/* User avatar */}
               <div
                 className="
                   relative
@@ -854,7 +1289,6 @@ const Sidebar = () => {
                   .charAt(0)
                   .toUpperCase()}
 
-                {/* Avatar shine */}
                 <div
                   className="
                     absolute
@@ -871,7 +1305,6 @@ const Sidebar = () => {
                 />
               </div>
 
-              {/* User info */}
               <div className="ml-2.5 min-w-0 flex-1">
                 <p
                   className="
@@ -895,7 +1328,6 @@ const Sidebar = () => {
                 </p>
               </div>
 
-              {/* Logout */}
               <button
                 type="button"
                 onClick={logout}
@@ -920,7 +1352,6 @@ const Sidebar = () => {
               </button>
             </motion.div>
 
-            {/* Footer */}
             <p
               className="
                 mt-2
@@ -967,7 +1398,6 @@ const Sidebar = () => {
             backdrop-blur-2xl
           "
         >
-          {/* Mobile logo */}
           <div
             className="
               relative
@@ -998,7 +1428,6 @@ const Sidebar = () => {
             </span>
           </div>
 
-          {/* Mobile brand */}
           <div className="ml-3">
             <p className="text-xs font-bold text-white">
               ServiceOS
@@ -1016,7 +1445,6 @@ const Sidebar = () => {
             </p>
           </div>
 
-          {/* Online indicator */}
           <div className="ml-auto flex items-center gap-2">
             <span className="text-[9px] font-medium text-white/25">
               Online
