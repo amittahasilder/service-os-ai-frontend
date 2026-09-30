@@ -2,6 +2,10 @@ import { motion } from "framer-motion";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
+// =====================================================
+// NAVIGATION ITEMS
+// =====================================================
+
 const navItems = [
   {
     label: "Dashboard",
@@ -50,6 +54,10 @@ const navItems = [
   },
 ];
 
+// =====================================================
+// SIDEBAR
+// =====================================================
+
 const Sidebar = () => {
   const { user, logout } = useAuth();
 
@@ -82,22 +90,84 @@ const Sidebar = () => {
           "
         >
           {/* =================================================
-              GLASS LIGHT
+              GLOBAL GLASS LIGHT
           ================================================= */}
 
           <div className="pointer-events-none absolute inset-0">
-            <div className="absolute left-0 top-0 h-40 w-full bg-gradient-to-b from-violet-500/[0.07] to-transparent" />
+            {/* Top glow */}
+            <div
+              className="
+                absolute
+                left-0
+                top-0
+                h-40
+                w-full
+                bg-gradient-to-b
+                from-violet-500/[0.07]
+                to-transparent
+              "
+            />
 
-            <div className="absolute -left-20 top-20 h-40 w-40 rounded-full bg-violet-500/[0.08] blur-[80px]" />
+            {/* Purple ambient glow */}
+            <div
+              className="
+                absolute
+                -left-20
+                top-20
+                h-40
+                w-40
+                rounded-full
+                bg-violet-500/[0.08]
+                blur-[80px]
+              "
+            />
 
-            <div className="absolute bottom-0 right-0 h-48 w-48 rounded-full bg-cyan-500/[0.025] blur-[90px]" />
+            {/* Cyan ambient glow */}
+            <div
+              className="
+                absolute
+                bottom-0
+                right-0
+                h-48
+                w-48
+                rounded-full
+                bg-cyan-500/[0.025]
+                blur-[90px]
+              "
+            />
+
+            {/* Subtle vertical shine */}
+            <div
+              className="
+                absolute
+                inset-y-0
+                right-0
+                w-px
+                bg-gradient-to-b
+                from-transparent
+                via-white/[0.08]
+                to-transparent
+              "
+            />
           </div>
 
           {/* =================================================
               BRAND
           ================================================= */}
 
-          <div className="relative flex h-20 shrink-0 items-center border-b border-white/[0.06] px-5">
+          <div
+            className="
+              relative
+              flex
+              h-20
+              shrink-0
+              items-center
+              border-b
+              border-white/[0.06]
+              px-5
+            "
+          >
+            {/* Logo */}
             <motion.div
               whileHover={{
                 scale: 1.06,
@@ -125,7 +195,7 @@ const Sidebar = () => {
                 shadow-[0_0_35px_rgba(139,92,246,0.12)]
               "
             >
-              {/* Logo shine */}
+              {/* Logo shine animation */}
               <motion.div
                 animate={{
                   x: ["-120%", "120%"],
@@ -149,6 +219,7 @@ const Sidebar = () => {
                 "
               />
 
+              {/* Logo letter */}
               <span
                 className="
                   relative
@@ -167,26 +238,50 @@ const Sidebar = () => {
               </span>
             </motion.div>
 
+            {/* Brand text */}
             <div className="ml-3 min-w-0">
-              <h1 className="truncate text-[15px] font-bold tracking-tight text-white">
+              <h1
+                className="
+                  truncate
+                  text-[15px]
+                  font-bold
+                  tracking-tight
+                  text-white
+                "
+              >
                 ServiceOS
               </h1>
 
-              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.18em] text-white/30">
+              <p
+                className="
+                  mt-0.5
+                  text-[10px]
+                  font-medium
+                  uppercase
+                  tracking-[0.18em]
+                  text-white/30
+                "
+              >
                 Business Operating System
               </p>
             </div>
           </div>
 
           {/* =================================================
-              WORKSPACE
+              WORKSPACE SWITCHER
           ================================================= */}
 
           <div className="relative px-4 pt-5">
             <motion.div
               whileHover={{
+                y: -1,
                 borderColor: "rgba(167,139,250,0.22)",
                 backgroundColor: "rgba(255,255,255,0.045)",
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 350,
+                damping: 25,
               }}
               className="
                 group
@@ -198,25 +293,89 @@ const Sidebar = () => {
                 border-white/[0.06]
                 bg-white/[0.025]
                 p-3
+                shadow-[inset_0_1px_0_rgba(255,255,255,0.025)]
                 transition-all
                 duration-300
               "
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/20 to-cyan-500/10 text-sm font-bold text-violet-300">
+              {/* Business avatar */}
+              <div
+                className="
+                  relative
+                  flex
+                  h-9
+                  w-9
+                  shrink-0
+                  items-center
+                  justify-center
+                  overflow-hidden
+                  rounded-xl
+                  border
+                  border-violet-400/10
+                  bg-gradient-to-br
+                  from-violet-500/20
+                  to-cyan-500/10
+                  text-sm
+                  font-bold
+                  text-violet-300
+                "
+              >
                 B
+
+                {/* shine */}
+                <div
+                  className="
+                    absolute
+                    inset-0
+                    bg-gradient-to-tr
+                    from-transparent
+                    via-white/[0.07]
+                    to-transparent
+                    opacity-0
+                    transition-opacity
+                    duration-300
+                    group-hover:opacity-100
+                  "
+                />
               </div>
 
+              {/* Business information */}
               <div className="ml-3 min-w-0 flex-1">
-                <p className="text-[10px] uppercase tracking-widest text-white/25">
+                <p
+                  className="
+                    text-[10px]
+                    uppercase
+                    tracking-widest
+                    text-white/25
+                  "
+                >
                   Workspace
                 </p>
 
-                <p className="mt-0.5 truncate text-xs font-semibold text-white/75">
+                <p
+                  className="
+                    mt-0.5
+                    truncate
+                    text-xs
+                    font-semibold
+                    text-white/75
+                  "
+                >
                   My Business
                 </p>
               </div>
 
-              <span className="text-xs text-white/25 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:text-white/50">
+              {/* Arrow */}
+              <span
+                className="
+                  text-xs
+                  text-white/25
+                  transition-all
+                  duration-300
+                  group-hover:translate-x-0.5
+                  group-hover:text-white/50
+                "
+              >
                 ›
               </span>
             </motion.div>
@@ -226,21 +385,39 @@ const Sidebar = () => {
               NAVIGATION
           ================================================= */}
 
-          <nav className="relative mt-5 flex-1 overflow-y-auto px-3 pb-4 [scrollbar-width:none]">
-            <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/20">
+          <nav
+            className="
+              relative
+              mt-5
+              flex-1
+              overflow-y-auto
+              px-3
+              pb-4
+              [scrollbar-width:none]
+            "
+          >
+            {/* Workspace label */}
+            <p
+              className="
+                mb-2
+                px-3
+                text-[10px]
+                font-semibold
+                uppercase
+                tracking-[0.2em]
+                text-white/20
+              "
+            >
               Workspace
             </p>
 
+            {/* Navigation items */}
             <div className="space-y-1">
-              {navItems.map((item, index) => (
+              {navItems.map((item) => (
                 <NavLink
                   key={item.path}
                   to={item.path}
-                  className={({ isActive }) =>
-                    `group relative block rounded-xl ${
-                      isActive ? "text-white" : "text-white/45"
-                    }`
-                  }
+                  className="group relative block rounded-xl"
                 >
                   {({ isActive }) => (
                     <motion.div
@@ -253,9 +430,25 @@ const Sidebar = () => {
                         stiffness: 450,
                         damping: 28,
                       }}
-                      className="relative flex items-center overflow-hidden rounded-xl px-3 py-2.5"
+                      className={`
+                        relative
+                        flex
+                        items-center
+                        overflow-hidden
+                        rounded-xl
+                        px-3
+                        py-2.5
+                        ${
+                          isActive
+                            ? "text-white"
+                            : "text-white/45"
+                        }
+                      `}
                     >
-                      {/* Active glass background */}
+                      {/* ======================================
+                          ACTIVE GLASS BACKGROUND
+                      ====================================== */}
+
                       {isActive && (
                         <motion.div
                           layoutId="activeSidebarItem"
@@ -279,7 +472,10 @@ const Sidebar = () => {
                         />
                       )}
 
-                      {/* Hover glass */}
+                      {/* ======================================
+                          HOVER GLASS
+                      ====================================== */}
+
                       <div
                         className="
                           pointer-events-none
@@ -294,7 +490,10 @@ const Sidebar = () => {
                         "
                       />
 
-                      {/* Active left indicator */}
+                      {/* ======================================
+                          ACTIVE LEFT INDICATOR
+                      ====================================== */}
+
                       {isActive && (
                         <motion.div
                           layoutId="activeSidebarIndicator"
@@ -313,7 +512,10 @@ const Sidebar = () => {
                         />
                       )}
 
-                      {/* Icon */}
+                      {/* ======================================
+                          ICON
+                      ====================================== */}
+
                       <motion.div
                         animate={
                           isActive
@@ -333,6 +535,7 @@ const Sidebar = () => {
                           flex
                           h-8
                           w-8
+                          shrink-0
                           items-center
                           justify-center
                           rounded-lg
@@ -350,23 +553,67 @@ const Sidebar = () => {
                         {item.icon}
                       </motion.div>
 
-                      {/* Label */}
-                      <span className="relative z-10 ml-3 flex-1 text-[13px] font-medium">
+                      {/* ======================================
+                          LABEL
+                      ====================================== */}
+
+                      <span
+                        className="
+                          relative
+                          z-10
+                          ml-3
+                          flex-1
+                          text-[13px]
+                          font-medium
+                        "
+                      >
                         {item.label}
                       </span>
 
-                      {/* Active dot */}
+                      {/* ======================================
+                          ACTIVE DOT
+                      ====================================== */}
+
                       {isActive && (
                         <motion.span
-                          initial={{ opacity: 0, scale: 0 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          className="relative z-10 h-1.5 w-1.5 rounded-full bg-violet-300 shadow-[0_0_10px_rgba(167,139,250,0.9)]"
+                          initial={{
+                            opacity: 0,
+                            scale: 0,
+                          }}
+                          animate={{
+                            opacity: 1,
+                            scale: 1,
+                          }}
+                          className="
+                            relative
+                            z-10
+                            h-1.5
+                            w-1.5
+                            rounded-full
+                            bg-violet-300
+                            shadow-[0_0_10px_rgba(167,139,250,0.9)]
+                          "
                         />
                       )}
 
-                      {/* Hover arrow */}
+                      {/* ======================================
+                          HOVER ARROW
+                      ====================================== */}
+
                       {!isActive && (
-                        <span className="relative z-10 translate-x-1 text-xs text-white/0 transition-all duration-300 group-hover:translate-x-0 group-hover:text-white/25">
+                        <span
+                          className="
+                            relative
+                            z-10
+                            translate-x-1
+                            text-xs
+                            text-white/0
+                            transition-all
+                            duration-300
+                            group-hover:translate-x-0
+                            group-hover:text-white/25
+                          "
+                        >
                           →
                         </span>
                       )}
@@ -376,32 +623,178 @@ const Sidebar = () => {
               ))}
             </div>
 
-            {/* More section */}
-            <p className="mb-2 mt-7 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/20">
+            {/* =================================================
+                SYSTEM SECTION
+            ================================================= */}
+
+            <p
+              className="
+                mb-2
+                mt-7
+                px-3
+                text-[10px]
+                font-semibold
+                uppercase
+                tracking-[0.2em]
+                text-white/20
+              "
+            >
               System
             </p>
 
+            {/* Settings */}
             <NavLink
               to="/settings"
-              className="group relative block rounded-xl text-white/45"
+              className="group relative block rounded-xl"
             >
-              <motion.div
-                whileHover={{ x: 3 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 450,
-                  damping: 28,
-                }}
-                className="flex items-center rounded-xl px-3 py-2.5 transition-colors duration-300 group-hover:bg-white/[0.025] group-hover:text-white/75"
-              >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-sm transition-all duration-300 group-hover:border-white/[0.06] group-hover:bg-white/[0.04]">
-                  ⚙
-                </div>
+              {({ isActive }) => (
+                <motion.div
+                  initial={false}
+                  whileHover={{
+                    x: 3,
+                  }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 450,
+                    damping: 28,
+                  }}
+                  className={`
+                    relative
+                    flex
+                    items-center
+                    overflow-hidden
+                    rounded-xl
+                    px-3
+                    py-2.5
+                    ${
+                      isActive
+                        ? "text-white"
+                        : "text-white/45"
+                    }
+                  `}
+                >
+                  {/* Active background */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeSidebarSystem"
+                      transition={{
+                        type: "spring",
+                        stiffness: 380,
+                        damping: 32,
+                      }}
+                      className="
+                        absolute
+                        inset-0
+                        rounded-xl
+                        border
+                        border-violet-400/15
+                        bg-gradient-to-r
+                        from-violet-500/[0.13]
+                        via-purple-500/[0.07]
+                        to-transparent
+                        shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_8px_25px_rgba(139,92,246,0.08)]
+                      "
+                    />
+                  )}
 
-                <span className="ml-3 text-[13px] font-medium">
-                  Settings
-                </span>
-              </motion.div>
+                  {/* Hover background */}
+                  <div
+                    className="
+                      pointer-events-none
+                      absolute
+                      inset-0
+                      rounded-xl
+                      bg-white/[0.025]
+                      opacity-0
+                      transition-opacity
+                      duration-300
+                      group-hover:opacity-100
+                    "
+                  />
+
+                  {/* Active indicator */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeSidebarSystemIndicator"
+                      className="
+                        absolute
+                        left-0
+                        h-6
+                        w-[3px]
+                        rounded-r-full
+                        bg-gradient-to-b
+                        from-violet-300
+                        via-violet-500
+                        to-cyan-400
+                        shadow-[0_0_14px_rgba(139,92,246,0.8)]
+                      "
+                    />
+                  )}
+
+                  {/* Icon */}
+                  <div
+                    className={`
+                      relative
+                      z-10
+                      flex
+                      h-8
+                      w-8
+                      shrink-0
+                      items-center
+                      justify-center
+                      rounded-lg
+                      border
+                      text-sm
+                      transition-all
+                      duration-300
+                      ${
+                        isActive
+                          ? "border-violet-400/15 bg-violet-400/10 text-violet-300 shadow-[0_0_18px_rgba(139,92,246,0.1)]"
+                          : "border-transparent text-white/35 group-hover:border-white/[0.06] group-hover:bg-white/[0.04] group-hover:text-white/75"
+                      }
+                    `}
+                  >
+                    ⚙
+                  </div>
+
+                  {/* Label */}
+                  <span
+                    className="
+                      relative
+                      z-10
+                      ml-3
+                      flex-1
+                      text-[13px]
+                      font-medium
+                    "
+                  >
+                    Settings
+                  </span>
+
+                  {/* Active dot */}
+                  {isActive && (
+                    <motion.span
+                      initial={{
+                        opacity: 0,
+                        scale: 0,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        scale: 1,
+                      }}
+                      className="
+                        relative
+                        z-10
+                        h-1.5
+                        w-1.5
+                        rounded-full
+                        bg-violet-300
+                        shadow-[0_0_10px_rgba(167,139,250,0.9)]
+                      "
+                    />
+                  )}
+                </motion.div>
+              )}
             </NavLink>
           </nav>
 
@@ -435,22 +828,74 @@ const Sidebar = () => {
                 hover:bg-white/[0.04]
               "
             >
-              <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-violet-500/25 to-cyan-500/10 text-xs font-bold text-violet-200">
-                {(user?.name || "U").charAt(0).toUpperCase()}
+              {/* User avatar */}
+              <div
+                className="
+                  relative
+                  flex
+                  h-9
+                  w-9
+                  shrink-0
+                  items-center
+                  justify-center
+                  overflow-hidden
+                  rounded-xl
+                  border
+                  border-violet-400/10
+                  bg-gradient-to-br
+                  from-violet-500/25
+                  to-cyan-500/10
+                  text-xs
+                  font-bold
+                  text-violet-200
+                "
+              >
+                {(user?.name || "U")
+                  .charAt(0)
+                  .toUpperCase()}
 
-                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.08] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                {/* Avatar shine */}
+                <div
+                  className="
+                    absolute
+                    inset-0
+                    bg-gradient-to-tr
+                    from-transparent
+                    via-white/[0.08]
+                    to-transparent
+                    opacity-0
+                    transition-opacity
+                    duration-300
+                    group-hover:opacity-100
+                  "
+                />
               </div>
 
+              {/* User info */}
               <div className="ml-2.5 min-w-0 flex-1">
-                <p className="truncate text-xs font-semibold text-white/80">
+                <p
+                  className="
+                    truncate
+                    text-xs
+                    font-semibold
+                    text-white/80
+                  "
+                >
                   {user?.name || "User"}
                 </p>
 
-                <p className="truncate text-[10px] text-white/30">
+                <p
+                  className="
+                    truncate
+                    text-[10px]
+                    text-white/30
+                  "
+                >
                   {user?.email || "Workspace account"}
                 </p>
               </div>
 
+              {/* Logout */}
               <button
                 type="button"
                 onClick={logout}
@@ -475,7 +920,16 @@ const Sidebar = () => {
               </button>
             </motion.div>
 
-            <p className="mt-2 text-center text-[9px] tracking-wide text-white/15">
+            {/* Footer */}
+            <p
+              className="
+                mt-2
+                text-center
+                text-[9px]
+                tracking-wide
+                text-white/15
+              "
+            >
               ServiceOS · Business OS
             </p>
           </div>
@@ -487,25 +941,98 @@ const Sidebar = () => {
       ===================================================== */}
 
       <div className="fixed left-3 right-3 top-3 z-50 lg:hidden">
-        <div className="flex h-14 items-center rounded-2xl border border-white/[0.08] bg-[#08080d]/80 px-3 shadow-[0_15px_50px_rgba(0,0,0,0.35)] backdrop-blur-2xl">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-violet-400/15 bg-violet-500/10">
-            <span className="bg-gradient-to-r from-violet-300 to-cyan-300 bg-clip-text text-sm font-black text-transparent">
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: -15,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.45,
+            ease: [0.22, 1, 0.36, 1],
+          }}
+          className="
+            flex
+            h-14
+            items-center
+            rounded-2xl
+            border
+            border-white/[0.08]
+            bg-[#08080d]/80
+            px-3
+            shadow-[0_15px_50px_rgba(0,0,0,0.35)]
+            backdrop-blur-2xl
+          "
+        >
+          {/* Mobile logo */}
+          <div
+            className="
+              relative
+              flex
+              h-9
+              w-9
+              items-center
+              justify-center
+              overflow-hidden
+              rounded-xl
+              border
+              border-violet-400/15
+              bg-violet-500/10
+            "
+          >
+            <span
+              className="
+                bg-gradient-to-r
+                from-violet-300
+                to-cyan-300
+                bg-clip-text
+                text-sm
+                font-black
+                text-transparent
+              "
+            >
               S
             </span>
           </div>
 
+          {/* Mobile brand */}
           <div className="ml-3">
             <p className="text-xs font-bold text-white">
               ServiceOS
             </p>
 
-            <p className="text-[9px] uppercase tracking-widest text-white/25">
+            <p
+              className="
+                text-[9px]
+                uppercase
+                tracking-widest
+                text-white/25
+              "
+            >
               Business OS
             </p>
           </div>
 
-          <div className="ml-auto h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
-        </div>
+          {/* Online indicator */}
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-[9px] font-medium text-white/25">
+              Online
+            </span>
+
+            <div
+              className="
+                h-2
+                w-2
+                rounded-full
+                bg-emerald-400
+                shadow-[0_0_10px_rgba(52,211,153,0.8)]
+              "
+            />
+          </div>
+        </motion.div>
       </div>
     </>
   );
