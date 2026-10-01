@@ -1,99 +1,224 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
 } from "react";
 
 import { getMyOrganizations } from "../api/organizationApi";
+import { useAuth } from "./AuthContext";
+
+// =========================================================
+// CONTEXT
+// =========================================================
 
 const OrganizationContext = createContext(null);
 
-const STORAGE_KEY = "serviceos_current_organization";
+const STORAGE_KEY =
+  "serviceos_current_organization";
 
-export const OrganizationProvider = ({ children }) => {
-  const [organizations, setOrganizations] = useState([]);
-  const [currentOrganization, setCurrentOrganization] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+// =========================================================
+// PROVIDER
+// =========================================================
 
-  // =====================================================
+export const OrganizationProvider = ({
+  children,
+}) => {
+  const {
+    isAuthenticated,
+    loading: authLoading,
+  } = useAuth();
+
+  // =======================================================
+  // STATE
+  // =======================================================
+
+  const [organizations, setOrganizations] =
+    useState([]);
+
+  const [
+    currentOrganization,
+    setCurrentOrganization,
+  ] = useState(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  // =======================================================
   // LOAD ORGANIZATIONS
-  // =====================================================
+  // =======================================================
 
-  const loadOrganizations = async () => {
-    try {
-      setLoading(true);
-      setError("");
+  const loadOrganizations =
+    useCallback(async () => {
+      // ---------------------------------------------------
+      // Wait until authentication is ready
+      // ---------------------------------------------------
 
-      const data = await getMyOrganizations();
+      if (authLoading) {
+        return;
+      }
 
-      // Support common backend response shapes
-      const organizationList =
-        data?.organizations ||
-        data?.data ||
-        (Array.isArray(data) ? data : []);
+      // ---------------------------------------------------
+      // User is not authenticated
+      // ---------------------------------------------------
 
-      setOrganizations(organizationList);
+      if (!isAuthenticated) {
+        setOrganizations([]);
+        setCurrentOrganization(null);
+        setError("");
+        setLoading(false);
 
-      // ================================================
-      // RESTORE PREVIOUS ORGANIZATION
-      // ================================================
+        return;
+      }
 
-      const savedOrganizationId = localStorage.getItem(
-        STORAGE_KEY
-      );
+      // ---------------------------------------------------
+      // Load organizations
+      // ---------------------------------------------------
 
-      const savedOrganization = organizationList.find(
-        (organization) =>
-          String(organization._id) ===
-          String(savedOrganizationId)
-      );
+      try {
+        setLoading(true);
+        setError("");
 
-      if (savedOrganization) {
-        setCurrentOrganization(savedOrganization);
-      } else if (organizationList.length > 0) {
-        setCurrentOrganization(organizationList[0]);
+        const response =
+          await getMyOrganizations();
+
+        console.log(
+          "ServiceOS organizations response:",
+          response
+        );
+
+        // -------------------------------------------------
+        // Normalize backend response
+        // -------------------------------------------------
+
+        const organizationList =
+          response?.organizations ||
+          response?.data?.organizations ||
+          response?.data ||
+          (Array.isArray(response)
+            ? response
+            : []);
+
+        const normalizedOrganizations =
+          Array.isArray(organizationList)
+            ? organizationList
+            : [];
+
+        setOrganizations(
+          normalizedOrganizations
+        );
+
+        // -------------------------------------------------
+        // No organization
+        // -------------------------------------------------
+
+        if (
+          normalizedOrganizations.length === 0
+        ) {
+          setCurrentOrganization(null);
+
+          localStorage.removeItem(
+            STORAGE_KEY
+          );
+
+          setError(
+            "No organization found. Please create a business first."
+          );
+
+          return;
+        }
+
+        // -------------------------------------------------
+        // Restore saved organization
+        // -------------------------------------------------
+
+        const savedOrganizationId =
+          localStorage.getItem(
+            STORAGE_KEY
+          );
+
+        const savedOrganization =
+          normalizedOrganizations.find(
+            (organization) =>
+              String(organization?._id) ===
+              String(savedOrganizationId)
+          );
+
+        // -------------------------------------------------
+        // Saved organization exists
+        // -------------------------------------------------
+
+        if (savedOrganization) {
+          setCurrentOrganization(
+            savedOrganization
+          );
+
+          return;
+        }
+
+        // -------------------------------------------------
+        // Select first organization
+        // -------------------------------------------------
+
+        const firstOrganization =
+          normalizedOrganizations[0];
+
+        setCurrentOrganization(
+          firstOrganization
+        );
 
         localStorage.setItem(
           STORAGE_KEY,
-          organizationList[0]._id
+          firstOrganization._id
         );
-      } else {
+      } catch (err) {
+        console.error(
+          "Organization loading error:",
+          err
+        );
+
+        setOrganizations([]);
         setCurrentOrganization(null);
-        localStorage.removeItem(STORAGE_KEY);
+
+        setError(
+          err?.response?.data?.message ||
+            err?.message ||
+            "Failed to load organizations."
+        );
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error(
-        "Organization loading error:",
-        err
-      );
+    }, [
+      authLoading,
+      isAuthenticated,
+    ]);
 
-      setError(
-        err?.response?.data?.message ||
-          "Failed to load organizations."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // =====================================================
+  // =======================================================
   // INITIAL LOAD
-  // =====================================================
+  // =======================================================
 
   useEffect(() => {
     loadOrganizations();
-  }, []);
+  }, [loadOrganizations]);
 
-  // =====================================================
+  // =======================================================
   // SWITCH ORGANIZATION
-  // =====================================================
+  // =======================================================
 
-  const switchOrganization = (organization) => {
-    if (!organization?._id) return;
+  const switchOrganization = (
+    organization
+  ) => {
+    if (!organization?._id) {
+      return;
+    }
 
-    setCurrentOrganization(organization);
+    setCurrentOrganization(
+      organization
+    );
 
     localStorage.setItem(
       STORAGE_KEY,
@@ -101,22 +226,30 @@ export const OrganizationProvider = ({ children }) => {
     );
   };
 
-  // =====================================================
+  // =======================================================
   // CLEAR ORGANIZATION
-  // =====================================================
+  // =======================================================
 
   const clearOrganization = () => {
     setCurrentOrganization(null);
-    localStorage.removeItem(STORAGE_KEY);
+
+    localStorage.removeItem(
+      STORAGE_KEY
+    );
   };
 
-  // =====================================================
+  // =======================================================
   // REFRESH ORGANIZATIONS
-  // =====================================================
+  // =======================================================
 
-  const refreshOrganizations = async () => {
-    await loadOrganizations();
-  };
+  const refreshOrganizations =
+    async () => {
+      await loadOrganizations();
+    };
+
+  // =======================================================
+  // PROVIDER
+  // =======================================================
 
   return (
     <OrganizationContext.Provider
@@ -135,12 +268,15 @@ export const OrganizationProvider = ({ children }) => {
   );
 };
 
-// =======================================================
+// =========================================================
 // CUSTOM HOOK
-// =======================================================
+// =========================================================
 
 export const useOrganization = () => {
-  const context = useContext(OrganizationContext);
+  const context =
+    useContext(
+      OrganizationContext
+    );
 
   if (!context) {
     throw new Error(
