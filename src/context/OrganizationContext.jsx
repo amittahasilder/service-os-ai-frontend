@@ -6,17 +6,140 @@ import {
   useState,
 } from "react";
 
-import { getMyOrganizations } from "../api/organizationApi";
+import {
+  getMyOrganizations,
+} from "../api/organizationApi";
+
 import { useAuth } from "./AuthContext";
 
 // =========================================================
 // CONTEXT
 // =========================================================
 
-const OrganizationContext = createContext(null);
+const OrganizationContext =
+  createContext(null);
 
 const STORAGE_KEY =
   "serviceos_current_organization";
+
+// =========================================================
+// OBJECT ID VALIDATOR
+// =========================================================
+
+const isValidObjectId = (value) => {
+  if (!value) {
+    return false;
+  }
+
+  const id = String(value).trim();
+
+  return /^[a-fA-F0-9]{24}$/.test(id);
+};
+
+// =========================================================
+// GET ORGANIZATION ID
+// =========================================================
+
+const getOrganizationId = (
+  organization
+) => {
+  if (!organization) {
+    return null;
+  }
+
+  /*
+   * Support possible backend structures:
+   *
+   * {
+   *   _id: "..."
+   * }
+   *
+   * {
+   *   id: "..."
+   * }
+   *
+   * {
+   *   organizationId: "..."
+   * }
+   *
+   * {
+   *   organization: {
+   *     _id: "..."
+   *   }
+   * }
+   *
+   * {
+   *   business: {
+   *     _id: "..."
+   *   }
+   * }
+   */
+
+  const possibleIds = [
+    organization?._id,
+
+    organization?.id,
+
+    organization?.organizationId,
+
+    organization?.organization?._id,
+
+    organization?.organization?.id,
+
+    organization?.business?._id,
+
+    organization?.business?.id,
+
+    organization?.business?.organizationId,
+  ];
+
+  for (const value of possibleIds) {
+    if (
+      isValidObjectId(value)
+    ) {
+      return String(value).trim();
+    }
+  }
+
+  return null;
+};
+
+// =========================================================
+// NORMALIZE ORGANIZATION
+// =========================================================
+
+const normalizeOrganization = (
+  organization
+) => {
+  if (!organization) {
+    return null;
+  }
+
+  const organizationId =
+    getOrganizationId(
+      organization
+    );
+
+  if (!organizationId) {
+    console.warn(
+      "ServiceOS: Could not find valid organization ID:",
+      organization
+    );
+
+    return null;
+  }
+
+  /*
+   * Keep original organization data,
+   * but force _id to be the real MongoDB ID.
+   */
+
+  return {
+    ...organization,
+
+    _id: organizationId,
+  };
+};
 
 // =========================================================
 // PROVIDER
@@ -55,7 +178,7 @@ export const OrganizationProvider = ({
   const loadOrganizations =
     useCallback(async () => {
       // ---------------------------------------------------
-      // Wait until authentication is ready
+      // WAIT FOR AUTH
       // ---------------------------------------------------
 
       if (authLoading) {
@@ -63,7 +186,7 @@ export const OrganizationProvider = ({
       }
 
       // ---------------------------------------------------
-      // User is not authenticated
+      // NOT AUTHENTICATED
       // ---------------------------------------------------
 
       if (!isAuthenticated) {
@@ -72,11 +195,15 @@ export const OrganizationProvider = ({
         setError("");
         setLoading(false);
 
+        localStorage.removeItem(
+          STORAGE_KEY
+        );
+
         return;
       }
 
       // ---------------------------------------------------
-      // Load organizations
+      // LOAD
       // ---------------------------------------------------
 
       try {
@@ -87,37 +214,152 @@ export const OrganizationProvider = ({
           await getMyOrganizations();
 
         console.log(
-          "ServiceOS organizations response:",
+          "========================================"
+        );
+
+        console.log(
+          "SERVICEOS ORGANIZATION RESPONSE:"
+        );
+
+        console.log(
           response
         );
 
-        // -------------------------------------------------
-        // Normalize backend response
-        // -------------------------------------------------
+        console.log(
+          "========================================"
+        );
 
-        const organizationList =
-          response?.organizations ||
-          response?.data?.organizations ||
-          response?.data ||
-          (Array.isArray(response)
-            ? response
-            : []);
+        // =================================================
+        // EXTRACT ORGANIZATION LIST
+        // =================================================
+
+        let organizationList = [];
+
+        // -----------------------------------------------
+        // response = [...]
+        // -----------------------------------------------
+
+        if (
+          Array.isArray(response)
+        ) {
+          organizationList =
+            response;
+        }
+
+        // -----------------------------------------------
+        // response.businesses
+        // -----------------------------------------------
+
+        else if (
+          Array.isArray(
+            response?.businesses
+          )
+        ) {
+          organizationList =
+            response.businesses;
+        }
+
+        // -----------------------------------------------
+        // response.organizations
+        // -----------------------------------------------
+
+        else if (
+          Array.isArray(
+            response?.organizations
+          )
+        ) {
+          organizationList =
+            response.organizations;
+        }
+
+        // -----------------------------------------------
+        // response.data.businesses
+        // -----------------------------------------------
+
+        else if (
+          Array.isArray(
+            response?.data?.businesses
+          )
+        ) {
+          organizationList =
+            response.data.businesses;
+        }
+
+        // -----------------------------------------------
+        // response.data.organizations
+        // -----------------------------------------------
+
+        else if (
+          Array.isArray(
+            response?.data?.organizations
+          )
+        ) {
+          organizationList =
+            response.data.organizations;
+        }
+
+        // -----------------------------------------------
+        // response.data
+        // -----------------------------------------------
+
+        else if (
+          Array.isArray(
+            response?.data
+          )
+        ) {
+          organizationList =
+            response.data;
+        }
+
+        // =================================================
+        // RAW LIST DEBUG
+        // =================================================
+
+        console.log(
+          "SERVICEOS RAW ORGANIZATION LIST:",
+          organizationList
+        );
+
+        // =================================================
+        // NORMALIZE
+        // =================================================
 
         const normalizedOrganizations =
-          Array.isArray(organizationList)
-            ? organizationList
-            : [];
+          organizationList
+            .map(
+              normalizeOrganization
+            )
+            .filter(Boolean);
+
+        // =================================================
+        // NORMALIZED DEBUG
+        // =================================================
+
+        console.log(
+          "SERVICEOS NORMALIZED ORGANIZATIONS:",
+          normalizedOrganizations
+        );
+
+        console.log(
+          "SERVICEOS ORGANIZATION COUNT:",
+          normalizedOrganizations.length
+        );
+
+        // =================================================
+        // SAVE ORGANIZATIONS
+        // =================================================
 
         setOrganizations(
           normalizedOrganizations
         );
 
-        // -------------------------------------------------
-        // No organization
-        // -------------------------------------------------
+        // =================================================
+        // NO ORGANIZATION
+        // =================================================
 
         if (
-          normalizedOrganizations.length === 0
+          normalizedOrganizations.length ===
+          0
         ) {
           setCurrentOrganization(null);
 
@@ -132,48 +374,123 @@ export const OrganizationProvider = ({
           return;
         }
 
-        // -------------------------------------------------
-        // Restore saved organization
-        // -------------------------------------------------
+        // =================================================
+        // SAVED ORGANIZATION ID
+        // =================================================
 
         const savedOrganizationId =
           localStorage.getItem(
             STORAGE_KEY
           );
 
-        const savedOrganization =
+        console.log(
+          "SERVICEOS SAVED ORGANIZATION ID:",
+          savedOrganizationId
+        );
+
+        // =================================================
+        // FIND SAVED ORGANIZATION
+        // =================================================
+
+        let selectedOrganization =
           normalizedOrganizations.find(
             (organization) =>
-              String(organization?._id) ===
-              String(savedOrganizationId)
+              String(
+                organization._id
+              ) ===
+              String(
+                savedOrganizationId
+              )
           );
 
-        // -------------------------------------------------
-        // Saved organization exists
-        // -------------------------------------------------
+        // =================================================
+        // FALLBACK
+        // =================================================
 
-        if (savedOrganization) {
-          setCurrentOrganization(
-            savedOrganization
-          );
-
-          return;
+        if (!selectedOrganization) {
+          selectedOrganization =
+            normalizedOrganizations[0];
         }
 
-        // -------------------------------------------------
-        // Select first organization
-        // -------------------------------------------------
+        // =================================================
+        // FINAL VALIDATION
+        // =================================================
 
-        const firstOrganization =
-          normalizedOrganizations[0];
+        const finalOrganizationId =
+          getOrganizationId(
+            selectedOrganization
+          );
+
+        if (
+          !finalOrganizationId
+        ) {
+          throw new Error(
+            "Selected organization has an invalid ID."
+          );
+        }
+
+        // =================================================
+        // FINAL ORGANIZATION
+        // =================================================
+
+        const finalOrganization = {
+          ...selectedOrganization,
+
+          _id: finalOrganizationId,
+        };
+
+        // =================================================
+        // SET CURRENT
+        // =================================================
 
         setCurrentOrganization(
-          firstOrganization
+          finalOrganization
         );
+
+        // =================================================
+        // SAVE ONLY ID
+        // =================================================
 
         localStorage.setItem(
           STORAGE_KEY,
-          firstOrganization._id
+          finalOrganizationId
+        );
+
+        // =================================================
+        // FINAL DEBUG
+        // =================================================
+
+        console.log(
+          "========================================"
+        );
+
+        console.log(
+          "SERVICEOS CURRENT ORGANIZATION:"
+        );
+
+        console.log(
+          finalOrganization
+        );
+
+        console.log(
+          "SERVICEOS CURRENT ORGANIZATION ID:",
+          finalOrganizationId
+        );
+
+        console.log(
+          "SERVICEOS ID TYPE:",
+          typeof finalOrganizationId
+        );
+
+        console.log(
+          "SERVICEOS ID VALID:",
+          isValidObjectId(
+            finalOrganizationId
+          )
+        );
+
+        console.log(
+          "========================================"
         );
       } catch (err) {
         console.error(
@@ -183,6 +500,10 @@ export const OrganizationProvider = ({
 
         setOrganizations([]);
         setCurrentOrganization(null);
+
+        localStorage.removeItem(
+          STORAGE_KEY
+        );
 
         setError(
           err?.response?.data?.message ||
@@ -197,69 +518,117 @@ export const OrganizationProvider = ({
       isAuthenticated,
     ]);
 
-  // =======================================================
+  // =========================================================
   // INITIAL LOAD
-  // =======================================================
+  // =========================================================
 
   useEffect(() => {
     loadOrganizations();
   }, [loadOrganizations]);
 
-  // =======================================================
-  // SWITCH ORGANIZATION
-  // =======================================================
+  // =========================================================
+  // STORAGE SYNC
+  // =========================================================
 
-  const switchOrganization = (
-    organization
-  ) => {
-    if (!organization?._id) {
-      return;
+  useEffect(() => {
+    const organizationId =
+      getOrganizationId(
+        currentOrganization
+      );
+
+    if (organizationId) {
+      localStorage.setItem(
+        STORAGE_KEY,
+        organizationId
+      );
     }
+  }, [
+    currentOrganization,
+  ]);
 
-    setCurrentOrganization(
-      organization
+  // =========================================================
+  // SWITCH ORGANIZATION
+  // =========================================================
+
+  const switchOrganization =
+    useCallback(
+      (organization) => {
+        const normalized =
+          normalizeOrganization(
+            organization
+          );
+
+        if (!normalized) {
+          console.warn(
+            "ServiceOS: Invalid organization selected:",
+            organization
+          );
+
+          return;
+        }
+
+        setCurrentOrganization(
+          normalized
+        );
+
+        localStorage.setItem(
+          STORAGE_KEY,
+          normalized._id
+        );
+
+        setError("");
+
+        console.log(
+          "ServiceOS switched organization:",
+          normalized
+        );
+      },
+      []
     );
 
-    localStorage.setItem(
-      STORAGE_KEY,
-      organization._id
-    );
-  };
-
-  // =======================================================
+  // =========================================================
   // CLEAR ORGANIZATION
-  // =======================================================
+  // =========================================================
 
-  const clearOrganization = () => {
-    setCurrentOrganization(null);
+  const clearOrganization =
+    useCallback(() => {
+      setCurrentOrganization(null);
 
-    localStorage.removeItem(
-      STORAGE_KEY
-    );
-  };
+      localStorage.removeItem(
+        STORAGE_KEY
+      );
+    }, []);
 
-  // =======================================================
-  // REFRESH ORGANIZATIONS
-  // =======================================================
+  // =========================================================
+  // REFRESH
+  // =========================================================
 
   const refreshOrganizations =
-    async () => {
+    useCallback(async () => {
       await loadOrganizations();
-    };
+    }, [
+      loadOrganizations,
+    ]);
 
-  // =======================================================
+  // =========================================================
   // PROVIDER
-  // =======================================================
+  // =========================================================
 
   return (
     <OrganizationContext.Provider
       value={{
         organizations,
+
         currentOrganization,
+
         switchOrganization,
+
         clearOrganization,
+
         refreshOrganizations,
+
         loading,
+
         error,
       }}
     >
@@ -269,7 +638,7 @@ export const OrganizationProvider = ({
 };
 
 // =========================================================
-// CUSTOM HOOK
+// HOOK
 // =========================================================
 
 export const useOrganization = () => {

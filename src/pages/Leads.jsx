@@ -12,6 +12,10 @@ import {
   getLeads,
 } from "../api/leadApi";
 
+import {
+  useOrganization,
+} from "../context/OrganizationContext";
+
 import CreateLeadModal from "../components/leads/CreateLeadModal";
 import EditLeadModal from "../components/leads/EditLeadModal";
 
@@ -90,6 +94,26 @@ const getInitials = (name = "") => {
 
 const Leads = () => {
   // =======================================================
+  // ORGANIZATION
+  // =======================================================
+
+  const {
+    currentOrganization,
+  } = useOrganization();
+
+  /*
+   * IMPORTANT:
+   * Always pass the organization ID to leadApi.
+   *
+   * Never pass the complete organization object.
+   */
+
+  const organizationId =
+    currentOrganization?._id
+      ? String(currentOrganization._id)
+      : null;
+
+  // =======================================================
   // DATA
   // =======================================================
 
@@ -141,6 +165,16 @@ const Leads = () => {
   // =======================================================
 
   const loadLeads = useCallback(async () => {
+    /*
+     * Organization is not ready yet.
+     * Do not call the API.
+     */
+
+    if (!organizationId) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError("");
@@ -163,7 +197,14 @@ const Leads = () => {
         params.search = search.trim();
       }
 
-      const response = await getLeads(params);
+      // ===================================================
+      // IMPORTANT FIX
+      // ===================================================
+
+      const response = await getLeads(
+        organizationId,
+        params
+      );
 
       const leadList =
         response?.data?.leads || [];
@@ -190,6 +231,7 @@ const Leads = () => {
       setLoading(false);
     }
   }, [
+    organizationId,
     search,
     statusFilter,
     sourceFilter,
@@ -201,12 +243,27 @@ const Leads = () => {
   // =======================================================
 
   const loadLeadStats = useCallback(async () => {
+    /*
+     * Organization is not ready yet.
+     */
+
+    if (!organizationId) {
+      setStatsLoading(false);
+      return;
+    }
+
     try {
       setStatsLoading(true);
       setStatsError("");
 
+      // ===================================================
+      // IMPORTANT FIX
+      // ===================================================
+
       const response =
-        await getLeadStats();
+        await getLeadStats(
+          organizationId
+        );
 
       const stats =
         response?.data?.stats || [];
@@ -224,6 +281,7 @@ const Leads = () => {
 
       setStatsError(
         err?.response?.data?.message ||
+          err?.message ||
           "Failed to load lead statistics."
       );
 
@@ -231,7 +289,7 @@ const Leads = () => {
     } finally {
       setStatsLoading(false);
     }
-  }, []);
+  }, [organizationId]);
 
   // =======================================================
   // INITIAL LOAD
@@ -292,6 +350,10 @@ const Leads = () => {
   // =======================================================
 
   const handleRefresh = async () => {
+    if (!organizationId) {
+      return;
+    }
+
     await Promise.all([
       loadLeads(),
       loadLeadStats(),
@@ -335,6 +397,71 @@ const Leads = () => {
   const handleCloseEditModal = () => {
     setEditLead(null);
   };
+
+  // =======================================================
+  // ORGANIZATION LOADING STATE
+  // =======================================================
+
+  if (!organizationId) {
+    return (
+      <div className="min-h-screen bg-[#050507] text-white">
+        <div className="flex min-h-screen items-center justify-center p-6">
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 15,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            className="
+              w-full
+              max-w-md
+              rounded-2xl
+              border
+              border-white/[0.08]
+              bg-white/[0.025]
+              p-8
+              text-center
+              shadow-[0_20px_80px_rgba(0,0,0,0.4)]
+              backdrop-blur-2xl
+            "
+          >
+            <div
+              className="
+                mx-auto
+                mb-5
+                flex
+                h-16
+                w-16
+                items-center
+                justify-center
+                rounded-2xl
+                border
+                border-violet-400/15
+                bg-violet-500/10
+                text-2xl
+                text-violet-300
+                shadow-[0_0_35px_rgba(139,92,246,0.12)]
+              "
+            >
+              ◎
+            </div>
+
+            <h2 className="text-lg font-semibold text-white/90">
+              Select a business
+            </h2>
+
+            <p className="mt-2 text-sm leading-6 text-white/40">
+              Please select an organization before
+              managing your leads.
+            </p>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   // =======================================================
   // RENDER

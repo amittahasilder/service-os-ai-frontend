@@ -1,27 +1,33 @@
 import api from "./api";
 
+import {
+  requireOrganizationId,
+} from "../utils/organization";
+
 // =====================================
-// ORGANIZATION HELPER
+// VALIDATE + NORMALIZE ORGANIZATION
 // =====================================
 
-const getOrganizationId = () => {
-  const organizationId = localStorage.getItem(
-    "serviceos_current_organization"
+const validateOrganizationId = (
+  organization
+) => {
+  return requireOrganizationId(
+    organization
   );
-
-  if (!organizationId) {
-    throw new Error("No organization selected.");
-  }
-
-  return organizationId;
 };
 
 // =====================================
 // GET ALL LEADS
 // =====================================
 
-export const getLeads = async (params = {}) => {
-  const organizationId = getOrganizationId();
+export const getLeads = async (
+  organization,
+  params = {}
+) => {
+  const organizationId =
+    validateOrganizationId(
+      organization
+    );
 
   const response = await api.get(
     `/organizations/${organizationId}/leads`,
@@ -37,8 +43,13 @@ export const getLeads = async (params = {}) => {
 // GET LEAD STATISTICS
 // =====================================
 
-export const getLeadStats = async () => {
-  const organizationId = getOrganizationId();
+export const getLeadStats = async (
+  organization
+) => {
+  const organizationId =
+    validateOrganizationId(
+      organization
+    );
 
   const response = await api.get(
     `/organizations/${organizationId}/leads/stats`
@@ -51,8 +62,20 @@ export const getLeadStats = async () => {
 // GET SINGLE LEAD
 // =====================================
 
-export const getLead = async (leadId) => {
-  const organizationId = getOrganizationId();
+export const getLead = async (
+  organization,
+  leadId
+) => {
+  const organizationId =
+    validateOrganizationId(
+      organization
+    );
+
+  if (!leadId) {
+    throw new Error(
+      "Lead ID is required."
+    );
+  }
 
   const response = await api.get(
     `/organizations/${organizationId}/leads/${leadId}`
@@ -65,8 +88,14 @@ export const getLead = async (leadId) => {
 // CREATE LEAD
 // =====================================
 
-export const createLead = async (leadData) => {
-  const organizationId = getOrganizationId();
+export const createLead = async (
+  organization,
+  leadData
+) => {
+  const organizationId =
+    validateOrganizationId(
+      organization
+    );
 
   const response = await api.post(
     `/organizations/${organizationId}/leads`,
@@ -81,10 +110,20 @@ export const createLead = async (leadData) => {
 // =====================================
 
 export const updateLead = async (
+  organization,
   leadId,
   leadData
 ) => {
-  const organizationId = getOrganizationId();
+  const organizationId =
+    validateOrganizationId(
+      organization
+    );
+
+  if (!leadId) {
+    throw new Error(
+      "Lead ID is required."
+    );
+  }
 
   const response = await api.put(
     `/organizations/${organizationId}/leads/${leadId}`,
@@ -99,10 +138,26 @@ export const updateLead = async (
 // =====================================
 
 export const updateLeadStatus = async (
+  organization,
   leadId,
   status
 ) => {
-  const organizationId = getOrganizationId();
+  const organizationId =
+    validateOrganizationId(
+      organization
+    );
+
+  if (!leadId) {
+    throw new Error(
+      "Lead ID is required."
+    );
+  }
+
+  if (!status) {
+    throw new Error(
+      "Lead status is required."
+    );
+  }
 
   const response = await api.patch(
     `/organizations/${organizationId}/leads/${leadId}/status`,
@@ -118,8 +173,20 @@ export const updateLeadStatus = async (
 // DELETE / ARCHIVE LEAD
 // =====================================
 
-export const removeLead = async (leadId) => {
-  const organizationId = getOrganizationId();
+export const removeLead = async (
+  organization,
+  leadId
+) => {
+  const organizationId =
+    validateOrganizationId(
+      organization
+    );
+
+  if (!leadId) {
+    throw new Error(
+      "Lead ID is required."
+    );
+  }
 
   const response = await api.delete(
     `/organizations/${organizationId}/leads/${leadId}`
