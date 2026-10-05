@@ -1,24 +1,35 @@
 import api from "./api";
 
-// =====================================
-// CUSTOMER API
-// =====================================
+import {
+  requireOrganizationId,
+} from "../utils/organization";
 
-// -------------------------------------
+// =====================================================
+// VALIDATE + NORMALIZE ORGANIZATION
+// =====================================================
+
+const validateOrganizationId = (
+  organization
+) => {
+  return requireOrganizationId(
+    organization
+  );
+};
+
+// =====================================================
 // GET ALL CUSTOMERS
-// -------------------------------------
+// =====================================================
 
 export const getCustomers = async ({
-  organizationId,
+  organization,
   status,
   source,
   search,
 } = {}) => {
-  if (!organizationId) {
-    throw new Error(
-      "Organization ID is required"
+  const organizationId =
+    validateOrganizationId(
+      organization
     );
-  }
 
   const params = {};
 
@@ -44,23 +55,22 @@ export const getCustomers = async ({
   return response.data;
 };
 
-// -------------------------------------
+// =====================================================
 // GET SINGLE CUSTOMER
-// -------------------------------------
+// =====================================================
 
 export const getCustomer = async ({
-  organizationId,
+  organization,
   customerId,
 }) => {
-  if (!organizationId) {
-    throw new Error(
-      "Organization ID is required"
+  const organizationId =
+    validateOrganizationId(
+      organization
     );
-  }
 
   if (!customerId) {
     throw new Error(
-      "Customer ID is required"
+      "Customer ID is required."
     );
   }
 
@@ -71,19 +81,18 @@ export const getCustomer = async ({
   return response.data;
 };
 
-// -------------------------------------
+// =====================================================
 // CREATE CUSTOMER
-// -------------------------------------
+// =====================================================
 
 export const createCustomer = async ({
-  organizationId,
+  organization,
   customerData,
 }) => {
-  if (!organizationId) {
-    throw new Error(
-      "Organization ID is required"
+  const organizationId =
+    validateOrganizationId(
+      organization
     );
-  }
 
   const response = await api.post(
     `/organizations/${organizationId}/customers`,
@@ -93,24 +102,23 @@ export const createCustomer = async ({
   return response.data;
 };
 
-// -------------------------------------
+// =====================================================
 // UPDATE CUSTOMER
-// -------------------------------------
+// =====================================================
 
 export const updateCustomer = async ({
-  organizationId,
+  organization,
   customerId,
   customerData,
 }) => {
-  if (!organizationId) {
-    throw new Error(
-      "Organization ID is required"
+  const organizationId =
+    validateOrganizationId(
+      organization
     );
-  }
 
   if (!customerId) {
     throw new Error(
-      "Customer ID is required"
+      "Customer ID is required."
     );
   }
 
@@ -122,23 +130,22 @@ export const updateCustomer = async ({
   return response.data;
 };
 
-// -------------------------------------
+// =====================================================
 // ARCHIVE CUSTOMER
-// -------------------------------------
+// =====================================================
 
 export const archiveCustomer = async ({
-  organizationId,
+  organization,
   customerId,
 }) => {
-  if (!organizationId) {
-    throw new Error(
-      "Organization ID is required"
+  const organizationId =
+    validateOrganizationId(
+      organization
     );
-  }
 
   if (!customerId) {
     throw new Error(
-      "Customer ID is required"
+      "Customer ID is required."
     );
   }
 
@@ -149,18 +156,17 @@ export const archiveCustomer = async ({
   return response.data;
 };
 
-// -------------------------------------
+// =====================================================
 // CUSTOMER STATS
-// -------------------------------------
+// =====================================================
 
 export const getCustomerStats = async (
-  organizationId
+  organization
 ) => {
-  if (!organizationId) {
-    throw new Error(
-      "Organization ID is required"
+  const organizationId =
+    validateOrganizationId(
+      organization
     );
-  }
 
   const response = await api.get(
     `/organizations/${organizationId}/customers/stats`
@@ -169,29 +175,30 @@ export const getCustomerStats = async (
   return response.data;
 };
 
-// -------------------------------------
+// =====================================================
 // LEAD → CUSTOMER
-// -------------------------------------
+// =====================================================
 
-export const convertLeadToCustomer = async ({
-  organizationId,
-  leadId,
-}) => {
-  if (!organizationId) {
-    throw new Error(
-      "Organization ID is required"
-    );
-  }
+export const convertLeadToCustomer =
+  async ({
+    organization,
+    leadId,
+  }) => {
+    const organizationId =
+      validateOrganizationId(
+        organization
+      );
 
-  if (!leadId) {
-    throw new Error(
-      "Lead ID is required"
-    );
-  }
+    if (!leadId) {
+      throw new Error(
+        "Lead ID is required."
+      );
+    }
 
-  const response = await api.post(
-    `/organizations/${organizationId}/leads/${leadId}/convert`
-  );
+    const response =
+      await api.post(
+        `/organizations/${organizationId}/leads/${leadId}/convert`
+      );
 
-  return response.data;
-};
+    return response.data;
+  };
