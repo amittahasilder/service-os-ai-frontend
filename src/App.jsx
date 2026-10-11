@@ -1,3 +1,4 @@
+
 import {
   BrowserRouter,
   Routes,
@@ -18,6 +19,8 @@ import Signup from "./pages/Signup";
 
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
+import Customers from "./pages/Customers";
+import Services from "./pages/Services";
 
 // =====================================================
 // AUTH
@@ -54,16 +57,40 @@ function App() {
 
         <Route element={<ProtectedRoute />}>
 
-          {/* Dashboard */}
+          {/* =================================================
+              DASHBOARD
+          ================================================= */}
+
           <Route
             path="/dashboard"
             element={<Dashboard />}
           />
 
-          {/* Leads */}
+          {/* =================================================
+              CRM — LEADS
+          ================================================= */}
+
           <Route
             path="/leads"
             element={<Leads />}
+          />
+
+          {/* =================================================
+              CRM — CUSTOMERS
+          ================================================= */}
+
+          <Route
+            path="/customers"
+            element={<Customers />}
+          />
+
+          {/* =================================================
+              BUSINESS MANAGEMENT — SERVICES
+          ================================================= */}
+
+          <Route
+            path="/services"
+            element={<Services />}
           />
 
         </Route>
@@ -90,27 +117,69 @@ function App() {
           path="*"
           element={
             <div className="flex min-h-screen items-center justify-center bg-[#050507] px-6 text-white">
+
               <div className="text-center">
 
-                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl border border-white/[0.08] bg-white/[0.03] shadow-[0_0_60px_rgba(139,92,246,0.08)] backdrop-blur-xl">
-                  <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-cyan-400 bg-clip-text text-3xl font-black text-transparent">
+                {/* Logo */}
+                <div
+                  className="
+                    mx-auto
+                    mb-6
+                    flex
+                    h-20
+                    w-20
+                    items-center
+                    justify-center
+                    rounded-3xl
+                    border
+                    border-white/[0.08]
+                    bg-white/[0.03]
+                    shadow-[0_0_60px_rgba(139,92,246,0.08)]
+                    backdrop-blur-xl
+                  "
+                >
+                  <span
+                    className="
+                      bg-gradient-to-r
+                      from-violet-400
+                      via-purple-400
+                      to-cyan-400
+                      bg-clip-text
+                      text-3xl
+                      font-black
+                      text-transparent
+                    "
+                  >
                     S
                   </span>
                 </div>
 
-                <h1 className="text-6xl font-black tracking-tight">
+                {/* 404 */}
+                <h1
+                  className="
+                    text-6xl
+                    font-black
+                    tracking-tight
+                  "
+                >
                   404
                 </h1>
 
-                <p className="mt-3 text-sm text-white/40">
+                {/* Message */}
+                <p
+                  className="
+                    mt-3
+                    text-sm
+                    text-white/40
+                  "
+                >
                   The page you're looking for doesn't exist.
                 </p>
 
+                {/* Back Button */}
                 <button
                   type="button"
-                  onClick={() =>
-                    window.history.back()
-                  }
+                  onClick={() => window.history.back()}
                   className="
                     mt-7
                     rounded-xl
@@ -122,16 +191,19 @@ function App() {
                     text-sm
                     font-semibold
                     text-violet-200
-                    transition
+                    transition-all
+                    duration-300
                     hover:border-violet-400/40
                     hover:bg-violet-500/15
                     hover:text-white
+                    hover:shadow-[0_0_30px_rgba(139,92,246,0.15)]
                   "
                 >
                   Go Back
                 </button>
 
               </div>
+
             </div>
           }
         />

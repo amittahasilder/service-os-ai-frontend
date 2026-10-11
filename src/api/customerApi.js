@@ -9,10 +9,10 @@ import {
 // =====================================================
 
 const validateOrganizationId = (
-  organization
+  organizationId
 ) => {
   return requireOrganizationId(
-    organization
+    organizationId
   );
 };
 
@@ -21,14 +21,14 @@ const validateOrganizationId = (
 // =====================================================
 
 export const getCustomers = async ({
-  organization,
+  organizationId,
   status,
   source,
   search,
 } = {}) => {
-  const organizationId =
+  const normalizedOrganizationId =
     validateOrganizationId(
-      organization
+      organizationId
     );
 
   const params = {};
@@ -46,7 +46,7 @@ export const getCustomers = async ({
   }
 
   const response = await api.get(
-    `/organizations/${organizationId}/customers`,
+    `/organizations/${normalizedOrganizationId}/customers`,
     {
       params,
     }
@@ -60,12 +60,12 @@ export const getCustomers = async ({
 // =====================================================
 
 export const getCustomer = async ({
-  organization,
+  organizationId,
   customerId,
 }) => {
-  const organizationId =
+  const normalizedOrganizationId =
     validateOrganizationId(
-      organization
+      organizationId
     );
 
   if (!customerId) {
@@ -75,7 +75,7 @@ export const getCustomer = async ({
   }
 
   const response = await api.get(
-    `/organizations/${organizationId}/customers/${customerId}`
+    `/organizations/${normalizedOrganizationId}/customers/${customerId}`
   );
 
   return response.data;
@@ -86,16 +86,25 @@ export const getCustomer = async ({
 // =====================================================
 
 export const createCustomer = async ({
-  organization,
+  organizationId,
   customerData,
 }) => {
-  const organizationId =
+  const normalizedOrganizationId =
     validateOrganizationId(
-      organization
+      organizationId
     );
 
+  if (
+    !customerData ||
+    typeof customerData !== "object"
+  ) {
+    throw new Error(
+      "Customer data is required."
+    );
+  }
+
   const response = await api.post(
-    `/organizations/${organizationId}/customers`,
+    `/organizations/${normalizedOrganizationId}/customers`,
     customerData
   );
 
@@ -107,13 +116,13 @@ export const createCustomer = async ({
 // =====================================================
 
 export const updateCustomer = async ({
-  organization,
+  organizationId,
   customerId,
   customerData,
 }) => {
-  const organizationId =
+  const normalizedOrganizationId =
     validateOrganizationId(
-      organization
+      organizationId
     );
 
   if (!customerId) {
@@ -122,8 +131,17 @@ export const updateCustomer = async ({
     );
   }
 
+  if (
+    !customerData ||
+    typeof customerData !== "object"
+  ) {
+    throw new Error(
+      "Customer data is required."
+    );
+  }
+
   const response = await api.put(
-    `/organizations/${organizationId}/customers/${customerId}`,
+    `/organizations/${normalizedOrganizationId}/customers/${customerId}`,
     customerData
   );
 
@@ -135,12 +153,12 @@ export const updateCustomer = async ({
 // =====================================================
 
 export const archiveCustomer = async ({
-  organization,
+  organizationId,
   customerId,
 }) => {
-  const organizationId =
+  const normalizedOrganizationId =
     validateOrganizationId(
-      organization
+      organizationId
     );
 
   if (!customerId) {
@@ -150,7 +168,7 @@ export const archiveCustomer = async ({
   }
 
   const response = await api.delete(
-    `/organizations/${organizationId}/customers/${customerId}`
+    `/organizations/${normalizedOrganizationId}/customers/${customerId}`
   );
 
   return response.data;
@@ -161,15 +179,15 @@ export const archiveCustomer = async ({
 // =====================================================
 
 export const getCustomerStats = async (
-  organization
+  organizationId
 ) => {
-  const organizationId =
+  const normalizedOrganizationId =
     validateOrganizationId(
-      organization
+      organizationId
     );
 
   const response = await api.get(
-    `/organizations/${organizationId}/customers/stats`
+    `/organizations/${normalizedOrganizationId}/customers/stats`
   );
 
   return response.data;
@@ -181,12 +199,12 @@ export const getCustomerStats = async (
 
 export const convertLeadToCustomer =
   async ({
-    organization,
+    organizationId,
     leadId,
   }) => {
-    const organizationId =
+    const normalizedOrganizationId =
       validateOrganizationId(
-        organization
+        organizationId
       );
 
     if (!leadId) {
@@ -197,7 +215,7 @@ export const convertLeadToCustomer =
 
     const response =
       await api.post(
-        `/organizations/${organizationId}/leads/${leadId}/convert`
+        `/organizations/${normalizedOrganizationId}/leads/${leadId}/convert`
       );
 
     return response.data;
