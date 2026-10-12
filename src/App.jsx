@@ -21,6 +21,8 @@ import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
 import Customers from "./pages/Customers";
 import Services from "./pages/Services";
+import Staff from "./pages/Staff";
+import Bookings from "./pages/Bookings";
 
 // =====================================================
 // AUTH
@@ -57,40 +59,46 @@ function App() {
 
         <Route element={<ProtectedRoute />}>
 
-          {/* =================================================
-              DASHBOARD
-          ================================================= */}
+          {/* DASHBOARD */}
 
           <Route
             path="/dashboard"
             element={<Dashboard />}
           />
 
-          {/* =================================================
-              CRM — LEADS
-          ================================================= */}
+          {/* CRM — LEADS */}
 
           <Route
             path="/leads"
             element={<Leads />}
           />
 
-          {/* =================================================
-              CRM — CUSTOMERS
-          ================================================= */}
+          {/* CRM — CUSTOMERS */}
 
           <Route
             path="/customers"
             element={<Customers />}
           />
 
-          {/* =================================================
-              BUSINESS MANAGEMENT — SERVICES
-          ================================================= */}
+          {/* BUSINESS MANAGEMENT — SERVICES */}
 
           <Route
             path="/services"
             element={<Services />}
+          />
+
+          {/* BUSINESS MANAGEMENT — STAFF */}
+
+          <Route
+            path="/staff"
+            element={<Staff />}
+          />
+
+          {/* BUSINESS MANAGEMENT — BOOKINGS */}
+
+          <Route
+            path="/bookings"
+            element={<Bookings />}
           />
 
         </Route>
@@ -110,7 +118,7 @@ function App() {
         />
 
         {/* =================================================
-            404
+            404 — NOT FOUND
         ================================================= */}
 
         <Route
@@ -120,7 +128,8 @@ function App() {
 
               <div className="text-center">
 
-                {/* Logo */}
+                {/* LOGO */}
+
                 <div
                   className="
                     mx-auto
@@ -155,6 +164,7 @@ function App() {
                 </div>
 
                 {/* 404 */}
+
                 <h1
                   className="
                     text-6xl
@@ -165,7 +175,8 @@ function App() {
                   404
                 </h1>
 
-                {/* Message */}
+                {/* MESSAGE */}
+
                 <p
                   className="
                     mt-3
@@ -176,7 +187,8 @@ function App() {
                   The page you're looking for doesn't exist.
                 </p>
 
-                {/* Back Button */}
+                {/* BACK BUTTON */}
+
                 <button
                   type="button"
                   onClick={() => window.history.back()}
@@ -206,7 +218,7 @@ function App() {
 
             </div>
           }
-        />
+/>
 
       </Routes>
     </BrowserRouter>
