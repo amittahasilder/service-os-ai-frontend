@@ -1407,7 +1407,6 @@
 // }
 
 
-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -1452,11 +1451,24 @@ import { getStaff } from "../api/staffApi";
 const getId = (item) =>
   item?._id?.toString?.() || item?.id?.toString?.() || "";
 
-const getErrorMessage = (error) =>
-  error?.response?.data?.message ||
-  error?.response?.data?.error ||
-  error?.message ||
-  "Something went wrong. Please try again.";
+const getErrorMessage = (error) => {
+  const data = error?.response?.data;
+  const issues = data?.errors || data?.issues || data?.details;
+
+  if (Array.isArray(issues) && issues.length) {
+    return issues
+      .map((issue) => {
+        const path = Array.isArray(issue.path)
+          ? issue.path.join(".")
+          : issue.path || issue.field || "Field";
+        return `${path}: ${issue.message || issue.msg || "Invalid value"}`;
+      })
+      .join(" | ");
+  }
+
+  return data?.message || data?.error || error?.message ||
+    "Something went wrong. Please try again.";
+};
 
 const getArray = (response, resourceKeys = []) => {
   const keys = [
@@ -1556,17 +1568,18 @@ const formatDateTime = (date) => {
   });
 };
 
-const toDateTimeLocal = (date) => {
+const toDateTimeLocal = (date, time) => {
   if (!date) return "";
 
   const parsed = new Date(date);
-
   if (Number.isNaN(parsed.getTime())) return "";
 
-  const localDate = new Date(
-    parsed.getTime() - parsed.getTimezoneOffset() * 60000
-  );
+  if (typeof time === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
+    const [hours, minutes] = time.split(":").map(Number);
+    parsed.setHours(hours, minutes, 0, 0);
+  }
 
+  const localDate = new Date(parsed.getTime() - parsed.getTimezoneOffset() * 60000);
   return localDate.toISOString().slice(0, 16);
 };
 
@@ -1610,14 +1623,26 @@ const getReferenceId = (value) => {
   return getId(value);
 };
 
-const getBookingStatus = (booking) =>
-  String(booking?.status || "pending").toLowerCase();
+const normalizeStatus = (value) => {
+  const status = String(value || "pending").toLowerCase();
+  if (status === "in-progress" || status === "in progress") return "in_progress";
+  if (status === "canceled") return "cancelled";
+  return status;
+};
+
+const getBookingStatus = (booking) => normalizeStatus(booking?.status);
+
+const getBookingAddress = (booking) =>
+  typeof booking?.location === "string"
+    ? booking.location
+    : booking?.location?.address || booking?.address || "";
 
 const statusStyles = {
   pending: "border-amber-400/20 bg-amber-400/10 text-amber-300",
   confirmed: "border-cyan-400/20 bg-cyan-400/10 text-cyan-300",
   scheduled: "border-cyan-400/20 bg-cyan-400/10 text-cyan-300",
   "in-progress": "border-violet-400/20 bg-violet-400/10 text-violet-300",
+  in_progress: "border-violet-400/20 bg-violet-400/10 text-violet-300",
   completed: "border-emerald-400/20 bg-emerald-400/10 text-emerald-300",
   cancelled: "border-red-400/20 bg-red-400/10 text-red-300",
   canceled: "border-red-400/20 bg-red-400/10 text-red-300",
@@ -1705,9 +1730,10 @@ function BookingModal({
         service: getReferenceId(initialBooking.service),
         staff: getReferenceId(initialBooking.staff),
         scheduledAt: toDateTimeLocal(
-          initialBooking.scheduledAt ||
-            initialBooking.startTime ||
-            initialBooking.date
+          initialBooking.bookingDate ||
+            initialBooking.scheduledAt ||
+            initialBooking.date,
+          initialBooking.startTime
         ),
         duration: String(initialBooking.duration || 60),
         status: getBookingStatus(initialBooking),
@@ -1767,16 +1793,32 @@ function BookingModal({
       return;
     }
 
+    const startTime = `${String(scheduledDate.getHours()).padStart(2, "0")}:${String(
+      scheduledDate.getMinutes()
+    ).padStart(2, "0")}`;
+
+    const endDate = new Date(scheduledDate.getTime() + duration * 60 * 1000);
+    const endTime = `${String(endDate.getHours()).padStart(2, "0")}:${String(
+      endDate.getMinutes()
+    ).padStart(2, "0")}`;
+
+    // Match createBookingSchema exactly. It is strict and does not accept
+    // scheduledAt, duration, address, or status on CREATE.
     const payload = {
       customer: form.customer,
       service: form.service,
       ...(form.staff ? { staff: form.staff } : {}),
-      scheduledAt: scheduledDate.toISOString(),
-      duration,
-      status: form.status,
-      notes: form.notes.trim(),
-      address: form.address.trim(),
+      bookingDate: scheduledDate.toISOString(),
+      startTime,
+      endTime,
+      ...(form.address.trim()
+        ? { location: { address: form.address.trim() } }
+        : {}),
+      ...(form.notes.trim() ? { notes: form.notes.trim() } : {}),
     };
+
+    // The supplied update schema allows status, but the create schema does not.
+    if (editing) payload.status = normalizeStatus(form.status);
 
     try {
       await onSubmit(payload);
@@ -1953,10 +1995,7 @@ function BookingModal({
                 <option value="confirmed" className="bg-[#100d19]">
                   Confirmed
                 </option>
-                <option value="scheduled" className="bg-[#100d19]">
-                  Scheduled
-                </option>
-                <option value="in-progress" className="bg-[#100d19]">
+                <option value="in_progress" className="bg-[#100d19]">
                   In progress
                 </option>
                 <option value="completed" className="bg-[#100d19]">
@@ -1964,6 +2003,9 @@ function BookingModal({
                 </option>
                 <option value="cancelled" className="bg-[#100d19]">
                   Cancelled
+                </option>
+                <option value="no_show" className="bg-[#100d19]">
+                  No show
                 </option>
               </select>
             </div>
@@ -2036,7 +2078,7 @@ function BookingCard({ booking, onEdit, onCancel, onStatusChange }) {
   const staff = booking.staff;
 
   const scheduledAt =
-    booking.scheduledAt || booking.startTime || booking.date;
+    booking.bookingDate || booking.scheduledAt || booking.date;
 
   const isCancelled = ["cancelled", "canceled"].includes(status);
   const isCompleted = status === "completed";
@@ -2133,10 +2175,10 @@ function BookingCard({ booking, onEdit, onCancel, onStatusChange }) {
             </div>
           </div>
 
-          {booking.address && (
+          {getBookingAddress(booking) && (
             <p className="mt-4 text-sm text-white/45">
               <span className="text-white/65">Address:</span>{" "}
-              {booking.address}
+              {getBookingAddress(booking)}
             </p>
           )}
 
@@ -2164,14 +2206,14 @@ function BookingCard({ booking, onEdit, onCancel, onStatusChange }) {
                 <option value="confirmed" className="bg-[#100d19]">
                   Confirmed
                 </option>
-                <option value="scheduled" className="bg-[#100d19]">
-                  Scheduled
-                </option>
-                <option value="in-progress" className="bg-[#100d19]">
+                <option value="in_progress" className="bg-[#100d19]">
                   In progress
                 </option>
                 <option value="completed" className="bg-[#100d19]">
                   Completed
+                </option>
+                <option value="no_show" className="bg-[#100d19]">
+                  No show
                 </option>
               </select>
               <ChevronDown
@@ -2522,7 +2564,7 @@ export default function Bookings() {
         organizationId,
         bookingId: getId(booking),
         bookingData: {
-          status: nextStatus,
+          status: normalizeStatus(nextStatus),
         },
       });
 
@@ -2790,10 +2832,7 @@ export default function Bookings() {
               <option value="confirmed" className="bg-[#100d19]">
                 Confirmed
               </option>
-              <option value="scheduled" className="bg-[#100d19]">
-                Scheduled
-              </option>
-              <option value="in-progress" className="bg-[#100d19]">
+              <option value="in_progress" className="bg-[#100d19]">
                 In progress
               </option>
               <option value="completed" className="bg-[#100d19]">
@@ -2801,6 +2840,9 @@ export default function Bookings() {
               </option>
               <option value="cancelled" className="bg-[#100d19]">
                 Cancelled
+              </option>
+              <option value="no_show" className="bg-[#100d19]">
+                No show
               </option>
             </select>
 
