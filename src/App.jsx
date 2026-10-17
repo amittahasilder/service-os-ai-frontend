@@ -1,4 +1,3 @@
-
 import {
   BrowserRouter,
   Routes,
@@ -23,6 +22,7 @@ import Customers from "./pages/Customers";
 import Services from "./pages/Services";
 import Staff from "./pages/Staff";
 import Bookings from "./pages/Bookings";
+import Jobs from "./pages/Jobs";
 
 // =====================================================
 // AUTH
@@ -38,7 +38,6 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-
         {/* =================================================
             PUBLIC ROUTES
         ================================================= */}
@@ -58,7 +57,6 @@ function App() {
         ================================================= */}
 
         <Route element={<ProtectedRoute />}>
-
           {/* DASHBOARD */}
 
           <Route
@@ -101,6 +99,12 @@ function App() {
             element={<Bookings />}
           />
 
+          {/* BUSINESS MANAGEMENT — JOBS */}
+
+          <Route
+            path="/jobs"
+            element={<Jobs />}
+          />
         </Route>
 
         {/* =================================================
@@ -125,9 +129,7 @@ function App() {
           path="*"
           element={
             <div className="flex min-h-screen items-center justify-center bg-[#050507] px-6 text-white">
-
               <div className="text-center">
-
                 {/* LOGO */}
 
                 <div
@@ -213,13 +215,10 @@ function App() {
                 >
                   Go Back
                 </button>
-
               </div>
-
             </div>
           }
-/>
-
+        />
       </Routes>
     </BrowserRouter>
   );

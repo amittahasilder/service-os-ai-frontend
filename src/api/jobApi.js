@@ -5,6 +5,10 @@ import api from "./api";
 // JOB API
 // =====================================
 
+// =====================================
+// VALIDATE ORGANIZATION ID
+// =====================================
+
 const requireOrganizationId = (organizationId) => {
   if (!organizationId) {
     throw new Error("Organization ID is required");
@@ -15,7 +19,7 @@ const requireOrganizationId = (organizationId) => {
 
 // =====================================
 // GET ALL JOBS
-// GET /:organizationId/jobs
+// GET /organizations/:organizationId/jobs
 // =====================================
 
 export const getJobs = async ({
@@ -39,7 +43,7 @@ export const getJobs = async ({
   if (date) params.date = date;
 
   const response = await api.get(
-    `/${orgId}/jobs`,
+    `/organizations/${orgId}/jobs`,
     { params }
   );
 
@@ -48,7 +52,7 @@ export const getJobs = async ({
 
 // =====================================
 // GET JOB STATS
-// GET /:organizationId/jobs/stats
+// GET /organizations/:organizationId/jobs/stats
 // =====================================
 
 export const getJobStats = async ({
@@ -57,7 +61,7 @@ export const getJobStats = async ({
   const orgId = requireOrganizationId(organizationId);
 
   const response = await api.get(
-    `/${orgId}/jobs/stats`
+    `/organizations/${orgId}/jobs/stats`
   );
 
   return response.data;
@@ -65,7 +69,7 @@ export const getJobStats = async ({
 
 // =====================================
 // GET SINGLE JOB
-// GET /:organizationId/jobs/:jobId
+// GET /organizations/:organizationId/jobs/:jobId
 // =====================================
 
 export const getJobById = async ({
@@ -79,7 +83,7 @@ export const getJobById = async ({
   }
 
   const response = await api.get(
-    `/${orgId}/jobs/${jobId}`
+    `/organizations/${orgId}/jobs/${jobId}`
   );
 
   return response.data;
@@ -87,7 +91,7 @@ export const getJobById = async ({
 
 // =====================================
 // CREATE JOB
-// POST /:organizationId/jobs
+// POST /organizations/:organizationId/jobs
 // =====================================
 
 export const createJob = async ({
@@ -101,7 +105,7 @@ export const createJob = async ({
   }
 
   const response = await api.post(
-    `/${orgId}/jobs`,
+    `/organizations/${orgId}/jobs`,
     jobData
   );
 
@@ -110,7 +114,7 @@ export const createJob = async ({
 
 // =====================================
 // UPDATE JOB
-// PUT /:organizationId/jobs/:jobId
+// PUT /organizations/:organizationId/jobs/:jobId
 // =====================================
 
 export const updateJob = async ({
@@ -129,7 +133,7 @@ export const updateJob = async ({
   }
 
   const response = await api.put(
-    `/${orgId}/jobs/${jobId}`,
+    `/organizations/${orgId}/jobs/${jobId}`,
     jobData
   );
 
@@ -138,7 +142,7 @@ export const updateJob = async ({
 
 // =====================================
 // CANCEL JOB
-// DELETE /:organizationId/jobs/:jobId
+// DELETE /organizations/:organizationId/jobs/:jobId
 // =====================================
 
 export const cancelJob = async ({
@@ -152,7 +156,7 @@ export const cancelJob = async ({
   }
 
   const response = await api.delete(
-    `/${orgId}/jobs/${jobId}`
+    `/organizations/${orgId}/jobs/${jobId}`
   );
 
   return response.data;

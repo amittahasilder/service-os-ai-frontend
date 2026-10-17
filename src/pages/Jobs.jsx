@@ -74,16 +74,30 @@ const EMPTY_FORM = {
   locationNotes: "",
 };
 
+// API helpers in this project usually return response.data directly.
+// Support both Axios responses and common backend response envelopes.
 const unwrapList = (response) => {
-  if (Array.isArray(response?.data?.data)) {
-    return response.data.data;
+  const candidates = [
+    response,
+    response?.data,
+    response?.data?.data,
+    response?.data?.customers,
+    response?.data?.services,
+    response?.data?.bookings,
+    response?.data?.staff,
+    response?.customers,
+    response?.services,
+    response?.bookings,
+    response?.staff,
+  ];
+
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) return candidate;
   }
 
-  if (Array.isArray(response?.data)) {
-    return response.data;
-  }
-
-  return [];
+  // Some endpoints wrap lists in { data: { items: [...] } }.
+  const nested = response?.data?.items ?? response?.items;
+  return Array.isArray(nested) ? nested : [];
 };
 
 const unwrapObject = (response) =>
@@ -332,22 +346,54 @@ export default function Jobs() {
     setOptionsLoading(true);
 
     try {
-      const [
-        bookingResponse,
-        customerResponse,
-        serviceResponse,
-        staffResponse,
-      ] = await Promise.all([
+      // Load each dropdown independently so one failed endpoint does not
+      // prevent the other dropdowns from being populated.
+      const results = await Promise.allSettled([
         getBookings({ organizationId }),
         getCustomers({ organizationId }),
-        getServices({ organizationId, status: "active" }),
-        getStaff({ organizationId, status: "active" }),
+        // Do not filter here: backend status values can vary between modules.
+        getServices({ organizationId }),
+        getStaff({ organizationId }),
       ]);
 
-      setBookings(unwrapList(bookingResponse));
-      setCustomers(unwrapList(customerResponse));
-      setServices(unwrapList(serviceResponse));
-      setStaffMembers(unwrapList(staffResponse));
+      const [bookingResult, customerResult, serviceResult, staffResult] = results;
+      const failedLabels = [];
+
+      if (bookingResult.status === "fulfilled") {
+        setBookings(unwrapList(bookingResult.value));
+      } else {
+        setBookings([]);
+        failedLabels.push("bookings");
+      }
+
+      if (customerResult.status === "fulfilled") {
+        setCustomers(unwrapList(customerResult.value));
+      } else {
+        setCustomers([]);
+        failedLabels.push("customers");
+      }
+
+      if (serviceResult.status === "fulfilled") {
+        setServices(unwrapList(serviceResult.value));
+      } else {
+        setServices([]);
+        failedLabels.push("services");
+      }
+
+      if (staffResult.status === "fulfilled") {
+        setStaffMembers(unwrapList(staffResult.value));
+      } else {
+        setStaffMembers([]);
+        failedLabels.push("staff");
+      }
+
+      if (failedLabels.length) {
+        const firstFailure = results.find((result) => result.status === "rejected");
+        setError(
+          firstFailure?.reason?.response?.data?.message ||
+            `Could not load ${failedLabels.join(", ")}. Check the relevant API route and permissions.`
+        );
+      }
     } catch (err) {
       setError(
         err?.response?.data?.message ||
@@ -1195,7 +1241,7 @@ export default function Jobs() {
                           }
                           className={inputClass}
                         >
-                          <option value="">Select customer</option>
+                          <option value="">{customers.length ? "Select customer" : "No customers found"}</option>
                           {customers.map((customer) => (
                             <option
                               key={getId(customer)}
@@ -1234,7 +1280,7 @@ export default function Jobs() {
                           }}
                           className={inputClass}
                         >
-                          <option value="">Select service</option>
+                          <option value="">{services.length ? "Select service" : "No services found"}</option>
                           {services.map((service) => (
                             <option
                               key={getId(service)}
