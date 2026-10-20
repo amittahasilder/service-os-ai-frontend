@@ -28,17 +28,9 @@ export const getQuotes = async ({
 
   const params = {};
 
-  if (search.trim()) {
-    params.search = search.trim();
-  }
-
-  if (status) {
-    params.status = status;
-  }
-
-  if (customer) {
-    params.customer = customer;
-  }
+  if (search.trim()) params.search = search.trim();
+  if (status) params.status = status;
+  if (customer) params.customer = customer;
 
   return api.get(`/${organizationId}/quotes`, {
     params,
@@ -60,7 +52,6 @@ export const getQuoteStats = async ({
 
 // =====================================
 // GET SINGLE QUOTE
-// GET /:organizationId/quotes/:quoteId
 // =====================================
 
 export const getQuoteById = async ({
@@ -80,7 +71,6 @@ export const getQuoteById = async ({
 
 // =====================================
 // CREATE QUOTE
-// POST /:organizationId/quotes
 // =====================================
 
 export const createQuote = async ({
@@ -101,7 +91,6 @@ export const createQuote = async ({
 
 // =====================================
 // UPDATE QUOTE
-// PUT /:organizationId/quotes/:quoteId
 // =====================================
 
 export const updateQuote = async ({
@@ -126,8 +115,7 @@ export const updateQuote = async ({
 };
 
 // =====================================
-// DELETE / ARCHIVE QUOTE
-// DELETE /:organizationId/quotes/:quoteId
+// DELETE / CANCEL QUOTE
 // =====================================
 
 export const deleteQuote = async ({
