@@ -1,4 +1,5 @@
 
+
 import api from "./api";
 
 // =====================================
@@ -13,9 +14,15 @@ const requireOrganizationId = (organizationId) => {
   return organizationId;
 };
 
+const getQuoteBaseUrl = (organizationId) => {
+  requireOrganizationId(organizationId);
+
+  return `/organizations/${organizationId}/quotes`;
+};
+
 // =====================================
 // GET ALL QUOTES
-// GET /:organizationId/quotes
+// GET /api/organizations/:organizationId/quotes
 // =====================================
 
 export const getQuotes = async ({
@@ -24,7 +31,7 @@ export const getQuotes = async ({
   status = "",
   customer = "",
 } = {}) => {
-  requireOrganizationId(organizationId);
+  const baseUrl = getQuoteBaseUrl(organizationId);
 
   const params = {};
 
@@ -32,22 +39,20 @@ export const getQuotes = async ({
   if (status) params.status = status;
   if (customer) params.customer = customer;
 
-  return api.get(`/${organizationId}/quotes`, {
-    params,
-  });
+  return api.get(baseUrl, { params });
 };
 
 // =====================================
 // GET QUOTE STATS
-// GET /:organizationId/quotes/stats
+// GET /api/organizations/:organizationId/quotes/stats
 // =====================================
 
 export const getQuoteStats = async ({
   organizationId,
 } = {}) => {
-  requireOrganizationId(organizationId);
+  const baseUrl = getQuoteBaseUrl(organizationId);
 
-  return api.get(`/${organizationId}/quotes/stats`);
+  return api.get(`${baseUrl}/stats`);
 };
 
 // =====================================
@@ -58,15 +63,13 @@ export const getQuoteById = async ({
   organizationId,
   quoteId,
 }) => {
-  requireOrganizationId(organizationId);
+  const baseUrl = getQuoteBaseUrl(organizationId);
 
   if (!quoteId) {
     throw new Error("Quote ID is required");
   }
 
-  return api.get(
-    `/${organizationId}/quotes/${quoteId}`
-  );
+  return api.get(`${baseUrl}/${quoteId}`);
 };
 
 // =====================================
@@ -77,16 +80,13 @@ export const createQuote = async ({
   organizationId,
   quoteData,
 }) => {
-  requireOrganizationId(organizationId);
+  const baseUrl = getQuoteBaseUrl(organizationId);
 
   if (!quoteData) {
     throw new Error("Quote data is required");
   }
 
-  return api.post(
-    `/${organizationId}/quotes`,
-    quoteData
-  );
+  return api.post(baseUrl, quoteData);
 };
 
 // =====================================
@@ -98,7 +98,7 @@ export const updateQuote = async ({
   quoteId,
   quoteData,
 }) => {
-  requireOrganizationId(organizationId);
+  const baseUrl = getQuoteBaseUrl(organizationId);
 
   if (!quoteId) {
     throw new Error("Quote ID is required");
@@ -108,10 +108,7 @@ export const updateQuote = async ({
     throw new Error("Quote data is required");
   }
 
-  return api.put(
-    `/${organizationId}/quotes/${quoteId}`,
-    quoteData
-  );
+  return api.put(`${baseUrl}/${quoteId}`, quoteData);
 };
 
 // =====================================
@@ -122,13 +119,12 @@ export const deleteQuote = async ({
   organizationId,
   quoteId,
 }) => {
-  requireOrganizationId(organizationId);
+  const baseUrl = getQuoteBaseUrl(organizationId);
 
   if (!quoteId) {
     throw new Error("Quote ID is required");
   }
 
-  return api.delete(
-    `/${organizationId}/quotes/${quoteId}`
-  );
+  return api.delete(`${baseUrl}/${quoteId}`);
 };
+

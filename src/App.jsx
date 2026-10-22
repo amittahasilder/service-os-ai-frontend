@@ -1,3 +1,4 @@
+
 import {
   BrowserRouter,
   Routes,
@@ -23,6 +24,7 @@ import Services from "./pages/Services";
 import Staff from "./pages/Staff";
 import Bookings from "./pages/Bookings";
 import Jobs from "./pages/Jobs";
+import Quotes from "./pages/Quotes";
 
 // =====================================================
 // AUTH
@@ -38,9 +40,9 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* =================================================
+        {/* =============================================
             PUBLIC ROUTES
-        ================================================= */}
+        ============================================= */}
 
         <Route
           path="/login"
@@ -52,9 +54,9 @@ function App() {
           element={<Signup />}
         />
 
-        {/* =================================================
+        {/* =============================================
             PROTECTED ROUTES
-        ================================================= */}
+        ============================================= */}
 
         <Route element={<ProtectedRoute />}>
           {/* DASHBOARD */}
@@ -105,11 +107,18 @@ function App() {
             path="/jobs"
             element={<Jobs />}
           />
+
+          {/* SALES — QUOTES */}
+
+          <Route
+            path="/quotes"
+            element={<Quotes />}
+          />
         </Route>
 
-        {/* =================================================
+        {/* =============================================
             ROOT ROUTE
-        ================================================= */}
+        ============================================= */}
 
         <Route
           path="/"
@@ -121,9 +130,9 @@ function App() {
           }
         />
 
-        {/* =================================================
+        {/* =============================================
             404 — NOT FOUND
-        ================================================= */}
+        ============================================= */}
 
         <Route
           path="*"
@@ -167,25 +176,13 @@ function App() {
 
                 {/* 404 */}
 
-                <h1
-                  className="
-                    text-6xl
-                    font-black
-                    tracking-tight
-                  "
-                >
+                <h1 className="text-6xl font-black tracking-tight">
                   404
                 </h1>
 
                 {/* MESSAGE */}
 
-                <p
-                  className="
-                    mt-3
-                    text-sm
-                    text-white/40
-                  "
-                >
+                <p className="mt-3 text-sm text-white/40">
                   The page you're looking for doesn't exist.
                 </p>
 
