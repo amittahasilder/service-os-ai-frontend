@@ -26,6 +26,7 @@ import Bookings from "./pages/Bookings";
 import Jobs from "./pages/Jobs";
 import Quotes from "./pages/Quotes";
 import Invoices from "./pages/Invoices";
+import Payments from "./pages/Payments";
 
 // =====================================================
 // AUTH
@@ -121,6 +122,13 @@ function App() {
           <Route
             path="/invoices"
             element={<Invoices />}
+          />
+
+          {/* FINANCE — PAYMENTS */}
+
+          <Route
+            path="/payments"
+            element={<Payments />}
           />
         </Route>
 
@@ -223,7 +231,7 @@ function App() {
               </div>
             </div>
           }
-        />
+/>
       </Routes>
     </BrowserRouter>
   );
