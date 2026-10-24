@@ -25,6 +25,7 @@ import Staff from "./pages/Staff";
 import Bookings from "./pages/Bookings";
 import Jobs from "./pages/Jobs";
 import Quotes from "./pages/Quotes";
+import Invoices from "./pages/Invoices";
 
 // =====================================================
 // AUTH
@@ -113,6 +114,13 @@ function App() {
           <Route
             path="/quotes"
             element={<Quotes />}
+          />
+
+          {/* FINANCE — INVOICES */}
+
+          <Route
+            path="/invoices"
+            element={<Invoices />}
           />
         </Route>
 
