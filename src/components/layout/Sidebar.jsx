@@ -1495,12 +1495,10 @@ const navItems = [
 
 // =====================================================
 // ORGANIZATION HELPERS
-// Supports direct organization and membership objects
 // =====================================================
 
 const getOrganizationData = (item) => {
   if (!item) return null;
-
   return item.organization || item.business || item;
 };
 
@@ -1534,7 +1532,6 @@ const getOrganizationName = (item) => {
 
 const getOrganizationInitial = (item) => {
   const name = getOrganizationName(item).trim();
-
   return name.charAt(0).toUpperCase() || "B";
 };
 
@@ -1567,18 +1564,32 @@ const Sidebar = () => {
     organizations = [],
     currentOrganization,
     switchOrganization,
+    createOrganization,
+    creatingOrganization,
     loading: organizationLoading,
   } = useOrganization();
 
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: "",
+    businessType: "Cleaning",
+    email: "",
+    phone: "",
+    website: "",
+  });
+
+  const [formError, setFormError] = useState("");
 
   const workspaceRef = useRef(null);
+  const modalRef = useRef(null);
 
   const currentOrganizationId =
     getOrganizationId(currentOrganization);
 
   // ===================================================
-  // CLOSE DROPDOWN WHEN CLICKING OUTSIDE
+  // CLOSE DROPDOWN ON OUTSIDE CLICK
   // ===================================================
 
   useEffect(() => {
@@ -1594,9 +1605,36 @@ const Sidebar = () => {
     document.addEventListener("mousedown", handleOutsideClick);
 
     return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener(
+        "mousedown",
+        handleOutsideClick
+      );
     };
   }, []);
+
+  // ===================================================
+  // CLOSE MODAL ON ESCAPE
+  // ===================================================
+
+  useEffect(() => {
+    if (!createModalOpen) return;
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape" && !creatingOrganization) {
+        setCreateModalOpen(false);
+        setFormError("");
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        handleEscape
+      );
+    };
+  }, [createModalOpen, creatingOrganization]);
 
   // ===================================================
   // ORGANIZATION SWITCH
@@ -1615,6 +1653,92 @@ const Sidebar = () => {
 
     switchOrganization(organization);
     setWorkspaceOpen(false);
+  };
+
+  // ===================================================
+  // OPEN CREATE MODAL
+  // ===================================================
+
+  const openCreateModal = () => {
+    setWorkspaceOpen(false);
+    setFormError("");
+
+    setFormData({
+      name: "",
+      businessType: "Cleaning",
+      email: "",
+      phone: "",
+      website: "",
+    });
+
+    setCreateModalOpen(true);
+  };
+
+  // ===================================================
+  // HANDLE FORM INPUT
+  // ===================================================
+
+  const handleFormChange = (event) => {
+    const { name, value } = event.target;
+
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+
+    if (formError) {
+      setFormError("");
+    }
+  };
+
+  // ===================================================
+  // CREATE WORKSPACE
+  // ===================================================
+
+  const handleCreateWorkspace = async (event) => {
+    event.preventDefault();
+
+    const name = formData.name.trim();
+
+    if (!name) {
+      setFormError("Please enter your workspace name.");
+      return;
+    }
+
+    if (!formData.businessType) {
+      setFormError("Please select a business type.");
+      return;
+    }
+
+    try {
+      setFormError("");
+
+      await createOrganization({
+        name,
+        businessType: formData.businessType,
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        website: formData.website.trim(),
+      });
+
+      // Context automatically selects the new workspace.
+      setCreateModalOpen(false);
+      setWorkspaceOpen(false);
+
+      setFormData({
+        name: "",
+        businessType: "Cleaning",
+        email: "",
+        phone: "",
+        website: "",
+      });
+    } catch (error) {
+      setFormError(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Could not create workspace. Please try again."
+      );
+    }
   };
 
   // ===================================================
@@ -1786,8 +1910,6 @@ const Sidebar = () => {
                   : "border-white/[0.06] bg-white/[0.025] hover:border-violet-400/20 hover:bg-white/[0.045]"
               }`}
             >
-              {/* BUSINESS AVATAR */}
-
               <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-violet-400/10 bg-gradient-to-br from-violet-500/20 to-cyan-500/10 text-sm font-bold text-violet-300">
                 {organizationLoading ? (
                   <motion.div
@@ -1803,8 +1925,6 @@ const Sidebar = () => {
                   getOrganizationInitial(currentOrganization)
                 )}
               </div>
-
-              {/* BUSINESS INFORMATION */}
 
               <div className="ml-3 min-w-0 flex-1">
                 <p className="text-[10px] uppercase tracking-widest text-white/25">
@@ -1841,8 +1961,6 @@ const Sidebar = () => {
                   }}
                   className="absolute left-4 right-4 top-[calc(100%+8px)] z-[100] overflow-hidden rounded-2xl border border-white/[0.09] bg-[#0b0b12] shadow-[0_25px_70px_rgba(0,0,0,0.75)]"
                 >
-                  {/* HEADER */}
-
                   <div className="border-b border-white/[0.06] px-3 py-3">
                     <div className="flex items-center justify-between">
                       <div>
@@ -1860,8 +1978,6 @@ const Sidebar = () => {
                     </div>
                   </div>
 
-                  {/* ORGANIZATION LIST */}
-
                   <div className="relative max-h-64 overflow-y-auto p-2">
                     {organizationLoading ? (
                       <div className="p-4 text-center text-xs text-white/50">
@@ -1873,7 +1989,7 @@ const Sidebar = () => {
                           No workspaces found
                         </p>
                         <p className="mt-1 text-[10px] text-white/35">
-                          Your account has no available businesses.
+                          Create your first business to get started.
                         </p>
                       </div>
                     ) : (
@@ -1926,15 +2042,15 @@ const Sidebar = () => {
                     )}
                   </div>
 
-                  {/* FOOTER */}
+                  {/* CREATE WORKSPACE BUTTON */}
 
                   <div className="border-t border-white/[0.06] p-2">
                     <button
                       type="button"
-                      onClick={() => setWorkspaceOpen(false)}
-                      className="flex w-full items-center rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-white/45 transition hover:bg-white/[0.04] hover:text-violet-300"
+                      onClick={openCreateModal}
+                      className="flex w-full items-center rounded-xl px-3 py-2.5 text-left text-[11px] font-medium text-white/60 transition hover:bg-violet-500/10 hover:text-violet-300"
                     >
-                      <span className="mr-2 text-sm">+</span>
+                      <span className="mr-2 text-base">+</span>
                       Create new workspace
                       <span className="ml-auto text-white/30">→</span>
                     </button>
@@ -1954,8 +2070,6 @@ const Sidebar = () => {
             <div className="space-y-1">
               {navItems.map(renderNavItem)}
             </div>
-
-            {/* SYSTEM */}
 
             <p className="mb-2 mt-7 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/25">
               System
@@ -2011,7 +2125,271 @@ const Sidebar = () => {
         </motion.div>
       </aside>
 
-      {/* MOBILE TOP NAV */}
+      {/* ===================================================
+          CREATE WORKSPACE MODAL
+      =================================================== */}
+
+      <AnimatePresence>
+        {createModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onMouseDown={(event) => {
+              if (
+                event.target === event.currentTarget &&
+                !creatingOrganization
+              ) {
+                setCreateModalOpen(false);
+                setFormError("");
+              }
+            }}
+            className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto bg-black/75 p-4 backdrop-blur-md"
+          >
+            <motion.div
+              ref={modalRef}
+              initial={{ opacity: 0, y: 20, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.97 }}
+              transition={{
+                duration: 0.25,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="create-workspace-title"
+              className="relative my-auto w-full max-w-lg overflow-hidden rounded-3xl border border-white/10 bg-[#0b0b12] shadow-[0_30px_100px_rgba(0,0,0,0.65)]"
+            >
+              {/* MODAL GLOW */}
+
+              <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-violet-500/10 blur-[80px]" />
+                <div className="absolute -bottom-20 -left-16 h-40 w-40 rounded-full bg-cyan-500/[0.06] blur-[70px]" />
+              </div>
+
+              {/* MODAL HEADER */}
+
+              <div className="relative flex items-start justify-between border-b border-white/[0.07] px-6 py-5 sm:px-7">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-violet-400/20 bg-gradient-to-br from-violet-500/20 to-cyan-500/10 text-xl text-violet-300">
+                    +
+                  </div>
+
+                  <div>
+                    <h2
+                      id="create-workspace-title"
+                      className="text-lg font-bold tracking-tight text-white"
+                    >
+                      Create Workspace
+                    </h2>
+                    <p className="mt-1 text-xs text-white/40">
+                      Set up a new business in ServiceOS.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={creatingOrganization}
+                  onClick={() => {
+                    setCreateModalOpen(false);
+                    setFormError("");
+                  }}
+                  aria-label="Close create workspace modal"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.07] text-white/50 transition hover:border-white/15 hover:bg-white/[0.05] hover:text-white disabled:opacity-40"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* FORM */}
+
+              <form
+                onSubmit={handleCreateWorkspace}
+                className="relative space-y-5 px-6 py-6 sm:px-7"
+              >
+                {/* BUSINESS NAME */}
+
+                <div>
+                  <label
+                    htmlFor="workspace-name"
+                    className="mb-2 block text-xs font-medium text-white/70"
+                  >
+                    Workspace Name <span className="text-violet-300">*</span>
+                  </label>
+
+                  <input
+                    id="workspace-name"
+                    name="name"
+                    type="text"
+                    value={formData.name}
+                    onChange={handleFormChange}
+                    placeholder="e.g. Ambrivo Labs"
+                    maxLength={100}
+                    required
+                    autoFocus
+                    disabled={creatingOrganization}
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.035] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-violet-400/50 focus:bg-violet-500/[0.04] focus:ring-2 focus:ring-violet-500/10 disabled:opacity-50"
+                  />
+                </div>
+
+                {/* BUSINESS TYPE */}
+
+                <div>
+                  <label
+                    htmlFor="workspace-business-type"
+                    className="mb-2 block text-xs font-medium text-white/70"
+                  >
+                    Business Type <span className="text-violet-300">*</span>
+                  </label>
+
+                  <select
+                    id="workspace-business-type"
+                    name="businessType"
+                    value={formData.businessType}
+                    onChange={handleFormChange}
+                    required
+                    disabled={creatingOrganization}
+                    className="w-full rounded-xl border border-white/10 bg-[#11111a] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-400/50 focus:ring-2 focus:ring-violet-500/10 disabled:opacity-50"
+                  >
+                    <option value="Cleaning">Cleaning</option>
+                    <option value="Plumbing">Plumbing</option>
+                    <option value="HVAC">HVAC</option>
+                    <option value="Electrical">Electrical</option>
+                    <option value="Repair">Repair & Maintenance</option>
+                    <option value="Salon">Salon & Beauty</option>
+                    <option value="Agency">Digital Agency</option>
+                    <option value="Consulting">Consulting</option>
+                    <option value="Freelancer">Freelancer</option>
+                    <option value="E-commerce">E-commerce</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                {/* EMAIL */}
+
+                <div>
+                  <label
+                    htmlFor="workspace-email"
+                    className="mb-2 block text-xs font-medium text-white/70"
+                  >
+                    Business Email <span className="text-white/30">(Optional)</span>
+                  </label>
+
+                  <input
+                    id="workspace-email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleFormChange}
+                    placeholder="business@example.com"
+                    maxLength={150}
+                    disabled={creatingOrganization}
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.035] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-violet-400/50 focus:ring-2 focus:ring-violet-500/10 disabled:opacity-50"
+                  />
+                </div>
+
+                {/* PHONE AND WEBSITE */}
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label
+                      htmlFor="workspace-phone"
+                      className="mb-2 block text-xs font-medium text-white/70"
+                    >
+                      Phone <span className="text-white/30">(Optional)</span>
+                    </label>
+
+                    <input
+                      id="workspace-phone"
+                      name="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={handleFormChange}
+                      placeholder="+880..."
+                      maxLength={30}
+                      disabled={creatingOrganization}
+                      className="w-full rounded-xl border border-white/10 bg-white/[0.035] px-3 py-3 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-violet-400/50 focus:ring-2 focus:ring-violet-500/10 disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="workspace-website"
+                      className="mb-2 block text-xs font-medium text-white/70"
+                    >
+                      Website <span className="text-white/30">(Optional)</span>
+                    </label>
+
+                    <input
+                      id="workspace-website"
+                      name="website"
+                      type="text"
+                      value={formData.website}
+                      onChange={handleFormChange}
+                      placeholder="https://..."
+                      maxLength={200}
+                      disabled={creatingOrganization}
+                      className="w-full rounded-xl border border-white/10 bg-white/[0.035] px-3 py-3 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-violet-400/50 focus:ring-2 focus:ring-violet-500/10 disabled:opacity-50"
+                    />
+                  </div>
+                </div>
+
+                {/* ERROR MESSAGE */}
+
+                {formError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    role="alert"
+                    className="rounded-xl border border-red-400/20 bg-red-500/[0.08] px-4 py-3 text-xs leading-5 text-red-300"
+                  >
+                    {formError}
+                  </motion.div>
+                )}
+
+                {/* ACTIONS */}
+
+                <div className="flex flex-col-reverse gap-3 border-t border-white/[0.07] pt-5 sm:flex-row sm:justify-end">
+                  <button
+                    type="button"
+                    disabled={creatingOrganization}
+                    onClick={() => {
+                      setCreateModalOpen(false);
+                      setFormError("");
+                    }}
+                    className="rounded-xl border border-white/10 px-5 py-3 text-xs font-medium text-white/60 transition hover:bg-white/[0.04] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={creatingOrganization}
+                    className="flex items-center justify-center gap-2 rounded-xl border border-violet-400/25 bg-gradient-to-r from-violet-600/90 to-purple-600/90 px-5 py-3 text-xs font-semibold text-white shadow-[0_0_25px_rgba(139,92,246,0.15)] transition hover:from-violet-500 hover:to-purple-500 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {creatingOrganization ? (
+                      <>
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        Creating Workspace...
+                      </>
+                    ) : (
+                      <>
+                        <span>+</span>
+                        Create Workspace
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ===================================================
+          MOBILE TOP NAV
+      =================================================== */}
 
       <div className="fixed left-3 right-3 top-3 z-50 lg:hidden">
         <motion.div
