@@ -1469,6 +1469,7 @@
 // export default Sidebar;
 
 
+
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NavLink } from "react-router-dom";
@@ -1574,7 +1575,7 @@ const Sidebar = () => {
 
   const [formData, setFormData] = useState({
     name: "",
-    businessType: "Cleaning",
+    businessType: "cleaning",
     email: "",
     phone: "",
     website: "",
@@ -1665,7 +1666,7 @@ const Sidebar = () => {
 
     setFormData({
       name: "",
-      businessType: "Cleaning",
+      businessType: "cleaning",
       email: "",
       phone: "",
       website: "",
@@ -1727,12 +1728,14 @@ const Sidebar = () => {
 
       setFormData({
         name: "",
-        businessType: "Cleaning",
+        businessType: "cleaning",
         email: "",
         phone: "",
         website: "",
       });
     } catch (error) {
+      console.error("Create workspace failed:", error);
+
       setFormError(
         error?.response?.data?.message ||
           error?.message ||
@@ -2252,17 +2255,19 @@ const Sidebar = () => {
                     disabled={creatingOrganization}
                     className="w-full rounded-xl border border-white/10 bg-[#11111a] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-400/50 focus:ring-2 focus:ring-violet-500/10 disabled:opacity-50"
                   >
-                    <option value="Cleaning">Cleaning</option>
-                    <option value="Plumbing">Plumbing</option>
-                    <option value="HVAC">HVAC</option>
-                    <option value="Electrical">Electrical</option>
-                    <option value="Repair">Repair & Maintenance</option>
-                    <option value="Salon">Salon & Beauty</option>
-                    <option value="Agency">Digital Agency</option>
-                    <option value="Consulting">Consulting</option>
-                    <option value="Freelancer">Freelancer</option>
-                    <option value="E-commerce">E-commerce</option>
-                    <option value="Other">Other</option>
+                    <option value="cleaning">Cleaning</option>
+                    <option value="plumbing">Plumbing</option>
+                    <option value="hvac">HVAC</option>
+                    <option value="electrical">Electrical</option>
+                    <option value="repair">Repair &amp; Maintenance</option>
+                    <option value="salon">Salon &amp; Beauty</option>
+                    <option value="agency">Digital Agency</option>
+                    <option value="consultant">Consulting</option>
+                    <option value="freelancer">Freelancer</option>
+                    <option value="photography">Photography</option>
+                    <option value="landscaping">Landscaping</option>
+                    <option value="automotive">Automotive</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
 
@@ -2324,7 +2329,7 @@ const Sidebar = () => {
                     <input
                       id="workspace-website"
                       name="website"
-                      type="text"
+                      type="url"
                       value={formData.website}
                       onChange={handleFormChange}
                       placeholder="https://..."
